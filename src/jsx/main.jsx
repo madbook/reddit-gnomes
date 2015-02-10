@@ -107,7 +107,7 @@
       var pageID = subreddit ? 2 : 0;
       var page = parts[pageID] || null;
       var thing = page ? parts[pageID + 1] : null;
-      var pathname = parts.join('/');
+      var pathname = '/' + parts.join('/');
 
       return {parts, pathname, subreddit, page, thing, protocol, host};
     }

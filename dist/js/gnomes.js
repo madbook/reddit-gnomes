@@ -107,7 +107,7 @@
       var pageID = subreddit ? 2 : 0;
       var page = parts[pageID] || null;
       var thing = page ? parts[pageID + 1] : null;
-      var pathname = parts.join('/');
+      var pathname = '/' + parts.join('/');
 
       return {parts:parts, pathname:pathname, subreddit:subreddit, page:page, thing:thing, protocol:protocol, host:host};
     };
@@ -154,6 +154,90 @@
     $('html').addClass(pluginClassNames);
     initQueue.forEach(function(init)  {return init(context, store);});
   });
+}();
+
+!function() {
+  'use strict';
+
+  window.initPlugin(
+    'live-comments',
+    'pulls comments into reddit live threads from related discussions',
+    plugin);
+
+  function plugin(context, store) {
+    var Comment = React.createClass({displayName: "Comment",
+      render:function() {
+        return React.createElement("li", {className: "liveupdate"}, 
+          React.createElement("a", {href: "#"}, 
+            React.createElement("time", {className: "live-timestamp"}, "some time ago")
+          ), 
+          React.createElement("div", {className: "body reddit-prototype-live-comment"}, 
+            React.createElement("header", null, 
+              "by ", React.createElement("a", {className: "reddit-prototype-live-comment-author"}, '/u/' + this.props.author), 
+              " " + ' ' +
+              "from discussion in",  
+              React.createElement("a", {className: "reddit-prototype-live-comment-subreddit", 
+                 href: this.props.discussionLink}, '/r/' + this.props.subreddit), 
+              " | ", 
+              React.createElement("span", {className: "reddit-prototype-live-comment-score"}, this.props.score + ' points')
+            ), 
+            React.createElement("div", {className: "md-container", 
+                 dangerouslySetInnerHTML: { __html: context.unsafe(this.props.body_html)}})
+          )
+        );
+      }
+    });
+
+    $(function() {
+      var $discussionLinks = $('#discussions > div > p > a');
+
+      if (!$discussionLinks.length) { return; }
+
+      var topDiscussionLink = $discussionLinks[0];
+
+      var path = context.parseURL(topDiscussionLink.href).pathname + '.json?sort=new';
+
+      $.get(path).then(function(res) {
+        if (!res || res.length !== 2) { return; } 
+
+        var comments = res[1].data.children.map(function(child)  {return child.data;});
+        var $liveUpdates = $('.liveupdate');
+
+        var i = 0;
+        var j = 0;
+
+        var getCommentTime = (function(comment)  {return comment.created_utc * 1000;});
+        var getLiveUpdateTime = (function(liveUpdate)  {return (new Date($(liveUpdate).find('time')[0].getAttribute('datetime'))).getTime();});
+
+        var commentTime = getCommentTime(comments[i]);
+        var liveUpdateTime = getLiveUpdateTime($liveUpdates[j]);
+
+        while (true) {
+          if (commentTime >= liveUpdateTime) {
+            // if the comment is newer than the liveUpdate
+            // insert above and check the next comment
+            $liveUpdates.eq(j).before(
+              $.parseHTML(React.renderToStaticMarkup(React.createElement(Comment, React.__spread({},  comments[i], {discussionLink: topDiscussionLink.href}))))
+            );
+            i++;
+            if (i < comments.length) {
+              commentTime = getCommentTime(comments[i]);
+            } else {
+              break;
+            }
+          } else {
+            // otherwise, do nothing and check the next liveupdate
+            j++;
+            if (j < $liveUpdates.length) {
+              liveUpdateTime = getLiveUpdateTime($liveUpdates[j]);
+            } else {
+              break;
+            }
+          }
+        };
+      });
+    });
+  }
 }();
 
 !function() {
@@ -425,7 +509,7 @@
         limit: 1,
         sort: 'top',
       });
-      var path = ("/" + pathObj.pathname + "/comments/" + id + ".json?" + params);
+      var path = (pathObj.pathname + "/comments/" + id + ".json?" + params);
 
       $.get(path).then(function(res) {
         var comment = res[1].data.children[0].data;

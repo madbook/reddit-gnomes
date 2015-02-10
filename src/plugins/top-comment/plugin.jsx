@@ -40,7 +40,7 @@
         limit: 1,
         sort: 'top',
       });
-      var path = `/${pathObj.pathname}/comments/${id}.json\?${params}`;
+      var path = `${pathObj.pathname}/comments/${id}.json\?${params}`;
 
       $.get(path).then(function(res) {
         var comment = res[1].data.children[0].data;

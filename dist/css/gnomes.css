@@ -1,4 +1,20 @@
 
+.gnome-live-comments .reddit-prototype-live-comment header {
+  font-size: 12px;
+  color: #888;
+  line-height: 15px;
+  margin-bottom: 5px;
+}
+.gnome-live-comments .reddit-prototype-live-comment .md-container {
+  box-sizing: border-box;
+  background-color: #fcfcf7;
+  border: 1px solid #e0e0ad;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 5px;
+  box-shadow: 0 2px 2px -1px #e6e6e6;
+}
+
 .gnome-prefs .gnome-prefs-table {
   margin-top: 10px;
   padding: 5px;
