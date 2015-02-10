@@ -1,4 +1,22 @@
 
+.gnome-juicy-votes .midcol {
+  overflow: visible !important;
+}
+@-webkit-keyframes pulse {
+  0% {
+    -webkit-transform: scale3d(1, 1, 1);
+  }
+  50% {
+    -webkit-transform: scale3d(1.2, 1.2, 1.2);
+  }
+  100% {
+    -webkit-transform: scale3d(1, 1, 1);
+  }
+}
+.gnome-juicy-votes .reddit-prototype-juicy-ui-pulse {
+  -webkit-animation: pulse 0.3s;
+}
+
 .gnome-live-comments .reddit-prototype-live-comment header {
   font-size: 12px;
   color: #888;

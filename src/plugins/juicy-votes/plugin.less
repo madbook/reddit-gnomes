@@ -1,0 +1,25 @@
+.gnome-juicy-votes {
+  .midcol {
+    overflow: visible !important;
+  }
+
+  @pulseScale: 1.2;
+
+  @-webkit-keyframes pulse {
+    0% {
+      -webkit-transform: scale3d(1, 1, 1);
+    }
+
+    50% {
+      -webkit-transform: scale3d(@pulseScale, @pulseScale, @pulseScale);
+    }
+
+    100% {
+      -webkit-transform: scale3d(1, 1, 1);
+    }
+  }
+
+  .reddit-prototype-juicy-ui-pulse {
+    -webkit-animation: pulse 0.3s;
+  }
+}
