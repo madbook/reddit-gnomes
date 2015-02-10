@@ -43,7 +43,7 @@
         if (!res || res.length !== 2) { return; } 
 
         var comments = res[1].data.children.map(child => child.data);
-        var $liveUpdates = $('.liveupdate');
+        var $liveUpdates = $('.liveupdate-listing .liveupdate');
 
         var i = 0;
         var j = 0;
