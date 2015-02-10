@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "reddit-gnomes",
+  "version": "0.1.0",
+
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.reddit.com/*",
+        "*://*.reddit.local/*"
+      ],
+      "css": [
+        "css/gnomes.css"
+      ],
+      "js": [
+        "bower_components/jquery/dist/jquery.min.js",
+        "bower_components/react/react-with-addons.min.js",
+        "js/gnomes.js"
+      ]
+    }
+  ]
+}

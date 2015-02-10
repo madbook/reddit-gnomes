@@ -1,0 +1,19 @@
+{
+  "name": "reddit-gnomes",
+  "version": "0.1.0",
+  "authors": [
+    "Matt Lee <matt@reddit.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "react": "~0.12.0",
+    "jquery": "~2.1.1"
+  }
+}

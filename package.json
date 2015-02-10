@@ -1,0 +1,25 @@
+{
+  "name": "reddit-gnomes",
+  "version": "0.1.0",
+  "description": "a chrome extension for loading UI experiments for reddit.com",
+  "scripts": {
+    "start": "grunt; grunt watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "bower install"
+  },
+  "dependencies": {
+    "bower": "^1.3.12",
+    "grunt": "^0.4.5",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-copy": "^0.7.0",
+    "grunt-contrib-less": "^0.12.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-react": "^0.10.0"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "grunt-exec": "^0.4.6",
+    "grunt-external-daemon": "^1.1.0"
+  }
+}

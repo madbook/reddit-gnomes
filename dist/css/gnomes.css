@@ -1,0 +1,107 @@
+
+.gnome-prefs .gnome-prefs-table {
+  margin-top: 10px;
+  padding: 5px;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+}
+.gnome-prefs .gnome-prefs-table tbody {
+  display: table;
+  width: 100%;
+}
+.gnome-prefs .gnome-prefs-table th {
+  width: 127px;
+}
+.gnome-prefs .gnome-prefs-table tr {
+  background-color: #d2f8d2;
+  border: 1px solid lightgreen;
+}
+.gnome-prefs .gnome-pref-for-prefs {
+  display: none;
+}
+
+.reddit-read-next {
+  -webkit-user-select: none;
+  z-index: 9001;
+  width: 300px;
+  height: 100px;
+  background: white;
+  border-style: solid;
+  border-color: #d9d9d9;
+  border-width: 1px;
+  position: relative;
+  box-sizing: border-box;
+  padding: 10px;
+  color: #1a1a1a;
+}
+.reddit-read-next.fixed {
+  position: fixed;
+  top: 0;
+  border-top-width: 0;
+}
+.reddit-read-next header {
+  font-size: 12px;
+  line-height: 15px;
+  color: #888888;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #f2f2f2;
+}
+.reddit-read-next-title {
+  display: block;
+  font-size: 12px;
+  line-height: 15px;
+  max-height: 45px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reddit-read-next-nav {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+}
+.reddit-read-next-button {
+  font-size: 10px;
+  display: inline-block;
+  width: 15px;
+  border-radius: 50%;
+  background-color: #a2a2a2;
+  text-align: center;
+  margin-left: 5px;
+  cursor: pointer;
+  color: white;
+}
+.reddit-read-next-post {
+  float: left;
+  display: block;
+  width: 100%;
+}
+.reddit-read-next-post.hidden {
+  display: none;
+}
+.reddit-read-next-post .thumbnail {
+  display: block;
+  float: left;
+  margin-right: 5px;
+  width: 50px;
+  height: 50px;
+}
+.reddit-read-next-post .thumbnail img {
+  width: 100%;
+  height: auto;
+}
+.reddit-read-next-meta {
+  color: #888888;
+  font-size: 10px;
+  line-height: 15px;
+}
+
+
+.gnome-top-comment .reddit-prototype-top-comment-text {
+  padding: 0 10px;
+  background-color: #fcfcf7;
+  border: 1px solid #e7e7bf;
+  border-radius: 2px;
+  float: left;
+  margin: 5px 0;
+}
