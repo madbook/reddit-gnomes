@@ -149,7 +149,39 @@
     }
   };
 
+  var gnomeClasses = [];
+
+  /*
+    hack to experiment with writing plugins as es6 classes.
+    have to queue these up to make sure that the class is fully defined prior
+    to initializing.  if the call to registerPlugin happens _above_ the function
+    definition, the function will exist but the methods will not have been
+    defined on the prototype yet.  Thanks javascript.
+   */
+  window.registerPlugin = function registerPlugin(GnomePlugin) {
+    gnomeClasses.push(GnomePlugin);
+  }
+
+  function registerPluginClass(GnomePlugin) {
+    if (GnomePlugin instanceof Function) {
+      var plugin = new GnomePlugin;
+      var run = plugin.run.bind(plugin);
+
+      if (plugin.getMetadata instanceof Function) {
+        var {name, description} = plugin.getMetadata();
+      } 
+
+      name = name || GnomePlugin.name;
+      description = description || '';
+
+      window.initPlugin(name, description, run);
+    } else {
+      throw "plugin must be a function";
+    }
+  }
+
   $(function() {
+    gnomeClasses.forEach(GnomePlugin => registerPluginClass(GnomePlugin));
     var pluginClassNames = store.keys().map(key => 'gnome-' + key).join(' ');
     $('html').addClass(pluginClassNames);
     initQueue.forEach(init => init(context, store));

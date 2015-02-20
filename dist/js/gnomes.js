@@ -149,7 +149,39 @@
     }
   };
 
+  var gnomeClasses = [];
+
+  /*
+    hack to experiment with writing plugins as es6 classes.
+    have to queue these up to make sure that the class is fully defined prior
+    to initializing.  if the call to registerPlugin happens _above_ the function
+    definition, the function will exist but the methods will not have been
+    defined on the prototype yet.  Thanks javascript.
+   */
+  window.registerPlugin = function registerPlugin(GnomePlugin) {
+    gnomeClasses.push(GnomePlugin);
+  }
+
+  function registerPluginClass(GnomePlugin) {
+    if (GnomePlugin instanceof Function) {
+      var plugin = new GnomePlugin;
+      var run = plugin.run.bind(plugin);
+
+      if (plugin.getMetadata instanceof Function) {
+        var $__0=   plugin.getMetadata(),name=$__0.name,description=$__0.description;
+      } 
+
+      name = name || GnomePlugin.name;
+      description = description || '';
+
+      window.initPlugin(name, description, run);
+    } else {
+      throw "plugin must be a function";
+    }
+  }
+
   $(function() {
+    gnomeClasses.forEach(function(GnomePlugin)  {return registerPluginClass(GnomePlugin);});
     var pluginClassNames = store.keys().map(function(key)  {return 'gnome-' + key;}).join(' ');
     $('html').addClass(pluginClassNames);
     initQueue.forEach(function(init)  {return init(context, store);});
@@ -473,19 +505,28 @@
 !function() {
   'use strict';
 
-  window.initPlugin(
-    'test', 
-    'performs a console log and checks for the "gnome-test" css class on the html element.',
-    plugin);
-  
-  function plugin(context, store) {
-    console.log(
+  window.registerPlugin(TestPlugin);
+
+  function TestPlugin(){}
+    TestPlugin.prototype.getMetadata=function() {
+      return {
+        name: 'test',
+        description: ("performs a console log and checks for the \"gnome-test\"\n                      css class on the html element."
+),
+      };
+    };
+
+    TestPlugin.prototype.run=function(context, store) {
+      var gnomeClassFound = $('html').hasClass('gnome-test');
+      console.log(
 ("--------\ntest init function has run!\nthe html element does " + 
 
-($('html').hasClass('gnome-test') ? '' : 'not ') + "have the 'gnome-test' class.\n--------"
+(gnomeClassFound ? '' : 'not ') + "have the \n'gnome-test' class.\n--------"
+
 )
-    );
-  }
+      );
+    };
+  
 }();
 
 !function() {
