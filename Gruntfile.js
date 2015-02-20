@@ -63,9 +63,6 @@ module.exports = function(grunt) {
         files: ['src/**/*.jsx', 'src/**/*.less', 'src/**/*.js', 'src/**/*.css'],
         tasks: [
           'default',
-          // if you don't have chrome-cli (and don't want it) but grunt is 
-          // throwing errors for you, comment this out!
-          'chrome_extension_reload',
         ],
       },
     },
@@ -144,6 +141,6 @@ module.exports = function(grunt) {
     ['external_daemon:getExtensionTabId', 'exec:reloadChromeTab']
   );
 
-  grunt.registerTask('default', ['react:development', 'less:development', 'copy:development']);
+  grunt.registerTask('default', ['react:development', 'less:development', 'copy:development', 'chrome_extension_reload']);
   grunt.registerTask('package', ['react:production', 'less:production', 'copy:production']);
 };
