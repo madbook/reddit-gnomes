@@ -12,25 +12,44 @@ module.exports = function(grunt) {
     ],
   };
 
+  var devLessFiles = {
+    "build/css/gnomes.css": lessFiles["build/css/gnomes.css"].concat([
+      "src/dev_plugins/**/*.less",
+      "src/dev_plugins/**/*.css",
+    ]),
+  };
+
+  var jsxFiles = {
+    'build/js/gnomes.js': [
+      'src/jsx/main.jsx',
+      'src/plugins/**/plugin.jsx',
+      'src/plugins/**/plugin.js',
+    ],
+  };
+
+  var devJSXFiles = {
+    'build/js/gnomes.js': jsxFiles['build/js/gnomes.js'].concat([
+      'src/dev_plugins/**/plugin.jsx',
+      'src/dev_plugins/**/plugin.js',
+    ]),
+  };
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     react: {
       options: {
         harmony: true,
       },
-      combined_file_output: {
-        files: {
-          'build/js/gnomes.js': [
-            'src/jsx/main.jsx',
-            'src/plugins/**/plugin.jsx',
-            'src/plugins/**/plugin.js',
-          ],
-        },
+      development: {
+        files: devJSXFiles,
+      },
+      production: {
+        files: jsxFiles,
       },
     },
     less: {
       development: {
-        files: lessFiles,
+        files: devLessFiles,
       },
       production: {
         files: lessFiles,
@@ -51,7 +70,7 @@ module.exports = function(grunt) {
       },
     },
     copy: {
-      main: {
+      development: {
         files: [
           {
             expand: true,
@@ -63,7 +82,7 @@ module.exports = function(grunt) {
           },
         ],
       },
-      package: {
+      production: {
         files: [
           {
             expand: true,
@@ -125,6 +144,6 @@ module.exports = function(grunt) {
     ['external_daemon:getExtensionTabId', 'exec:reloadChromeTab']
   );
 
-  grunt.registerTask('default', ['react', 'less', 'copy']);
-  grunt.registerTask('package', ['default', 'copy:package']);
+  grunt.registerTask('default', ['react:development', 'less:development', 'copy:development']);
+  grunt.registerTask('package', ['react:production', 'less:production', 'copy:production']);
 };
