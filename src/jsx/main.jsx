@@ -113,6 +113,79 @@
   }
 
 
+  /*
+    hooks system lifted from reddit
+    see r2/r2/lib/hooks.py
+   */
+
+  var _hooks = {};
+
+  class Hook {
+    static getHook(name) {
+      return _hooks[name] || (_hooks[name] = new Hook())
+    }
+
+    static getAllHooks() {
+      return _hooks;
+    }
+
+    constructor() {
+      this._handlers = [];
+    }
+
+    registerHandler(handler) {
+      this._handlers.push(handler);
+    }
+
+    call(...args) {
+      return this._handlers.map(handler => handler.apply(null, args));
+    }
+
+    callUntilReturn(...args) {
+      var res;
+      this._handlers.some(function(handler) {
+        res = handler.apply(null, args)
+        return res !== null && res !== undefined;
+      });
+      return res;
+    }
+  }
+
+
+  class HookRegistrar {
+    constructor() {
+      this.registered = false;
+      this._connections = [];
+    }
+
+    on(name, fn) {
+      var hook = Hook.getHook(name);
+      var handler = (...args) => fn.apply(this, args); 
+
+      if (this.registered) {
+        hook.registerHandler(handler);
+      } else {
+        this._connections.push([hook, handler]);
+      }
+
+      return fn;
+    }
+
+    registerAll() {
+      this._connections.forEach(connection => {
+        var [hook, handler] = connection;
+
+        hook.registerHandler(handler);
+        this.registered = true;
+      });
+    }
+  }
+
+  // hacky, need to do this better
+  window.Hook = Hook;
+  window.HookRegistrar = HookRegistrar;
+
+  /**
    * we'll derive some info from the current path and put it in an object to
    * pass around to the plugins; this is the kind of stuff that a lot of plugins
    * are probably going to need to know about, there's no sense in making them
