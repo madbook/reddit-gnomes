@@ -65,23 +65,16 @@
     }
   }
 
-  /**
-   * we'll derive some info from the current path and put it in an object to
-   * pass around to the plugins; this is the kind of stuff that a lot of plugins
-   * are probably going to need to know about, there's no sense in making them
-   * all do the work independently
-   */
-  
+
   var protocolPattern = /^(https?:)/;
   var hostPattern = /([a-zA-Z0-9_\-\.]{3,}\.[a-zA-Z]{2,3})/;
-  var unsafeDiv = document.createElement('div');
 
-  class Context {
-    constructor(pathname) {
-      this.location = this.parseURL(pathname);
+  class Location {
+    static parseURL(url) {
+      return new Location(url);
     }
 
-    parseURL(url) {
+    constructor(url) {
       var protocolMatch = url.match(protocolPattern);
       var protocol;
 
@@ -109,7 +102,32 @@
       var thing = page ? parts[pageID + 1] : null;
       var pathname = '/' + parts.join('/');
 
-      return {parts, pathname, subreddit, page, thing, protocol, host};
+      this.parts = parts;
+      this.pathname = pathname;
+      this.subreddit = subreddit;
+      this.page = page;
+      this.thing = thing;
+      this.protocol = protocol;
+      this.host = host;
+    }
+  }
+
+
+   * we'll derive some info from the current path and put it in an object to
+   * pass around to the plugins; this is the kind of stuff that a lot of plugins
+   * are probably going to need to know about, there's no sense in making them
+   * all do the work independently
+   */
+
+  var unsafeDiv = document.createElement('div');
+
+  class Context {
+    constructor(pathname) {
+      this.location = this.parseURL(pathname);
+    }
+
+    parseURL(url) {
+      return Location.parseURL(url);
     }
 
     unsafe(text) {
@@ -121,6 +139,7 @@
   var store = new Store('reddit-gnomes');
   var context = new Context(location.pathname);
   var initQueue = [];
+
 
   /**
    * this function should be used to initialize every plugin.  each plugin
