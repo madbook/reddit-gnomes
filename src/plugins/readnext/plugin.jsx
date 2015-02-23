@@ -7,7 +7,7 @@
     plugin);
   
   function plugin(context, store) {
-    if (!context.location.page === 'comments') { return; }
+    if (context.location.page !== 'comments') { return; }
 
     var {subreddit, thing} = context.location;
     var fullname = 't3_' + thing;
