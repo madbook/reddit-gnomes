@@ -65,23 +65,16 @@
     };
   
 
-  /**
-   * we'll derive some info from the current path and put it in an object to
-   * pass around to the plugins; this is the kind of stuff that a lot of plugins
-   * are probably going to need to know about, there's no sense in making them
-   * all do the work independently
-   */
-  
+
   var protocolPattern = /^(https?:)/;
   var hostPattern = /([a-zA-Z0-9_\-\.]{3,}\.[a-zA-Z]{2,3})/;
-  var unsafeDiv = document.createElement('div');
 
   
-    function Context(pathname) {
-      this.location = this.parseURL(pathname);
-    }
+    Location.parseURL=function(url) {
+      return new Location(url);
+    };
 
-    Context.prototype.parseURL=function(url) {
+    function Location(url) {
       var protocolMatch = url.match(protocolPattern);
       var protocol;
 
@@ -109,7 +102,105 @@
       var thing = page ? parts[pageID + 1] : null;
       var pathname = '/' + parts.join('/');
 
-      return {parts:parts, pathname:pathname, subreddit:subreddit, page:page, thing:thing, protocol:protocol, host:host};
+      this.parts = parts;
+      this.pathname = pathname;
+      this.subreddit = subreddit;
+      this.page = page;
+      this.thing = thing;
+      this.protocol = protocol;
+      this.host = host;
+    }
+  
+
+
+  /*
+    hooks system lifted from reddit
+    see r2/r2/lib/hooks.py
+   */
+
+  var _hooks = {};
+
+  
+    Hook.getHook=function(name) {
+      return _hooks[name] || (_hooks[name] = new Hook())
+    };
+
+    Hook.getAllHooks=function() {
+      return _hooks;
+    };
+
+    function Hook() {
+      this.$Hook_handlers = [];
+    }
+
+    Hook.prototype.registerHandler=function(handler) {
+      this.$Hook_handlers.push(handler);
+    };
+
+    Hook.prototype.call=function() {for (var args=[],$__0=0,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);
+      return this.$Hook_handlers.map(function(handler)  {return handler.apply(null, args);});
+    };
+
+    Hook.prototype.callUntilReturn=function() {for (var args=[],$__0=0,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);
+      var res;
+      this.$Hook_handlers.some(function(handler) {
+        res = handler.apply(null, args)
+        return res !== null && res !== undefined;
+      });
+      return res;
+    };
+  
+
+
+  
+    function HookRegistrar() {
+      this.registered = false;
+      this.$HookRegistrar_connections = [];
+    }
+
+    HookRegistrar.prototype.on=function(name, fn) {
+      var hook = Hook.getHook(name);
+      var handler = function()  {for (var args=[],$__0=0,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);return fn.apply(this, args);}.bind(this); 
+
+      if (this.registered) {
+        hook.registerHandler(handler);
+      } else {
+        this.$HookRegistrar_connections.push([hook, handler]);
+      }
+
+      return fn;
+    };
+
+    HookRegistrar.prototype.registerAll=function() {
+      this.$HookRegistrar_connections.forEach(function(connection)  {
+        var $__0=   connection,hook=$__0[0],handler=$__0[1];
+
+        hook.registerHandler(handler);
+        this.registered = true;
+      }.bind(this));
+    };
+  
+
+  // hacky, need to do this better
+  window.Hook = Hook;
+  window.HookRegistrar = HookRegistrar;
+
+  /**
+   * we'll derive some info from the current path and put it in an object to
+   * pass around to the plugins; this is the kind of stuff that a lot of plugins
+   * are probably going to need to know about, there's no sense in making them
+   * all do the work independently
+   */
+
+  var unsafeDiv = document.createElement('div');
+
+  
+    function Context(pathname) {
+      this.location = this.parseURL(pathname);
+    }
+
+    Context.prototype.parseURL=function(url) {
+      return Location.parseURL(url);
     };
 
     Context.prototype.unsafe=function(text) {
@@ -121,6 +212,7 @@
   var store = new Store('reddit-gnomes');
   var context = new Context(location.pathname);
   var initQueue = [];
+
 
   /**
    * this function should be used to initialize every plugin.  each plugin
@@ -368,7 +460,7 @@
     plugin);
   
   function plugin(context, store) {
-    if (!context.location.page === 'comments') { return; }
+    if (context.location.page !== 'comments') { return; }
 
     var $__0=   context.location,subreddit=$__0.subreddit,thing=$__0.thing;
     var fullname = 't3_' + thing;
