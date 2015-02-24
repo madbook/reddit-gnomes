@@ -51,8 +51,14 @@
   background-color: #d2f8d2;
   border: 1px solid lightgreen;
 }
-.gnome-prefs .gnome-pref-for-prefs {
+.gnome-prefs .gnome-pref-for-gnome-preferences {
   display: none;
+}
+.gnome-prefs .gnome-pref {
+  margin-left: 1em;
+}
+.gnome-prefs .gnome-pref:first-child {
+  margin-left: 0;
 }
 
 .reddit-read-next {
@@ -66,7 +72,6 @@
   border-width: 1px;
   position: relative;
   box-sizing: border-box;
-  padding: 10px;
   color: #1a1a1a;
 }
 .reddit-read-next.fixed {
@@ -74,12 +79,19 @@
   top: 0;
   border-top-width: 0;
 }
+.reddit-read-next.fixed.fixed-to-bottom {
+  top: auto;
+  bottom: 0;
+  border-top-width: 1px;
+  border-bottom-width: 0;
+}
 .reddit-read-next header {
   font-size: 12px;
-  line-height: 15px;
+  line-height: 20px;
   color: #888888;
-  margin-bottom: 5px;
-  border-bottom: 1px solid #f2f2f2;
+  padding: 5px 10px 0;
+  background-color: #EFF7FF;
+  border-bottom: 1px solid #d6eaff;
 }
 .reddit-read-next-title {
   display: block;
@@ -93,10 +105,12 @@
   position: absolute;
   top: 5px;
   right: 10px;
+  line-height: 15px;
 }
 .reddit-read-next-button {
   font-size: 10px;
   display: inline-block;
+  height: 15px;
   width: 15px;
   border-radius: 50%;
   background-color: #a2a2a2;
@@ -104,11 +118,22 @@
   margin-left: 5px;
   cursor: pointer;
   color: white;
+  position: relative;
+  transition: all 0.2s;
+}
+.reddit-read-next-button:active {
+  background-color: #959595;
+  transform: scale(1.01, 1.01) translateY(1px);
+}
+.reddit-read-next-post-list {
+  padding: 5px 10px 10px;
 }
 .reddit-read-next-post {
   float: left;
   display: block;
   width: 100%;
+  height: 60px;
+  overflow: hidden;
 }
 .reddit-read-next-post.hidden {
   display: none;
@@ -117,6 +142,7 @@
   display: block;
   float: left;
   margin-right: 5px;
+  margin-top: 3px;
   width: 50px;
   height: 50px;
 }

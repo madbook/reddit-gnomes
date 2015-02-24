@@ -1,65 +1,51 @@
-!function() {
-  'use strict';
+'use strict';
 
-  window.initPlugin(
-    'prefs',
-    'creates UI on the user preference page to enable and disable plugins',
-    plugin);
+import Plugin from '../../jsx/plugin';
+import context from '../../jsx/context';
+import { getPluginsList } from '../../jsx/plugins';
+import hooks from '../../jsx/hooks';
 
-  function plugin(context, store) {
-    if (context.location.page !== 'prefs') { return; }
+import { GnomePrefs, preftableTemplate }  from './views';
 
-    var GnomePrefInput = React.createClass({
-      getInitialState() {
-        var val = this.props.val;
-        return {val};
-      },
 
-      render() {
-        return <div className={'gnome-pref-for-' + this.props.name}>
-          <input ref="checkbox" type="checkbox" name={this.props.name} checked={this.state.val} onClick={this.handleClick} />
-          <label for={this.props.name}>{this.props.name}</label>
-          &nbsp;
-          <span className="little gray">({this.props.description || ''})</span>
-        </div>;
-      },
+export default class PrefsPlugin extends Plugin {
+  shouldRun() {
+    return context.page === 'prefs';
+  }
 
-      handleClick() {
-        var key = this.props.name;
-        var val = !this.state.val;
-        store.set(`${key}/enabled`, val);
-        this.setState({val});
-      },
-    });
-
-    var GnomePrefs = React.createClass({
-      render() {
-        var prefs = store.keys().map(function(key) {
-          var {enabled, description} = store.state[key];
-
-          return <GnomePrefInput key={key} 
-                                 name={key}
-                                 description={description}
-                                 val={enabled} />
-        });
-
-        return <div className="gnome-prefs-panel">{prefs}</div>;
-      }
-    });
-
-    var prefTable = $.parseHTML(`
-      <table class="preftable pretty-form gnome-prefs-table">
-        <tr>
-          <th>gnome options</th>
-          <td class="prefright">
-          </td>
-        </tr>
-      </table>
-    `);
+  run() {
+    var prefTable = $.parseHTML(preftableTemplate);
     var mountNode = document.createElement('div');
+    var plugins = getPluginsList();
+    var descriptor = this.buildDescriptor(plugins);;
+
+    hooks.get('init-prefs').call(descriptor);
 
     $(prefTable).find('.prefright').append(mountNode);
     $('.content form').eq(0).after(prefTable);
-    React.render(<GnomePrefs />, mountNode);
+    React.render(<GnomePrefs plugins={plugins}
+                             descriptor={descriptor} />, mountNode);
   }
-}();
+
+  buildDescriptor(plugins) {
+    var descriptor = {};
+    
+    plugins.forEach(plugin => {
+      var { displayName, description } = plugin.meta;
+      
+      descriptor[plugin.name] = [{
+        property: 'enabled',
+        displayName: displayName,
+        description: description,
+      }];
+    });
+
+    return descriptor;
+  }
+}
+
+PrefsPlugin.meta = {
+  displayName: 'Gnome Preferences',
+  description: `creates UI on the user preference page to enable and 
+disable plugins`,
+};

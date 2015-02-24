@@ -1,8 +1,8 @@
 module.exports = function(grunt) {
-  grunt.loadNpmTasks('grunt-react');
   grunt.loadNpmTasks('grunt-contrib-less');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-browserify');
 
   var lessFiles = {
     "build/css/gnomes.css": [
@@ -19,32 +19,30 @@ module.exports = function(grunt) {
     ]),
   };
 
-  var jsxFiles = {
-    'build/js/gnomes.js': [
-      'src/jsx/main.jsx',
-      'src/plugins/**/plugin.jsx',
-      'src/plugins/**/plugin.js',
-    ],
-  };
+  var jsxFiles = [
+    'src/jsx/main.jsx',
+    'src/plugins/**/plugin.jsx',
+    'src/plugins/**/plugin.js',
+  ];
 
-  var devJSXFiles = {
-    'build/js/gnomes.js': jsxFiles['build/js/gnomes.js'].concat([
-      'src/dev_plugins/**/plugin.jsx',
-      'src/dev_plugins/**/plugin.js',
-    ]),
-  };
+  var devJSXFiles = jsxFiles.concat([
+    'src/dev_plugins/**/plugin.jsx',
+    'src/dev_plugins/**/plugin.js',
+  ]);
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    react: {
+    browserify: {
       options: {
-        harmony: true,
+        browserifyOptions: {
+          extensions: ['.jsx', '.js', '.es6'],
+        },
+        transform: ['babelify']
       },
-      development: {
-        files: devJSXFiles,
-      },
-      production: {
-        files: jsxFiles,
+      dist: {
+        files: {
+          './build/js/gnomes.js': './src/jsx/main.jsx',
+        },
       },
     },
     less: {
@@ -141,6 +139,6 @@ module.exports = function(grunt) {
     ['external_daemon:getExtensionTabId', 'exec:reloadChromeTab']
   );
 
-  grunt.registerTask('default', ['react:development', 'less:development', 'copy:development', 'chrome_extension_reload']);
-  grunt.registerTask('package', ['react:production', 'less:production', 'copy:production']);
+  grunt.registerTask('default', ['browserify', 'less:development', 'copy:development', 'chrome_extension_reload']);
+  grunt.registerTask('package', ['browserify', 'less:production', 'copy:production']);
 };

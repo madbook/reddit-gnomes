@@ -23,7 +23,7 @@ grunt
 3. click `Load unpacked extension...`.
 4. browse to the `dist/` folder in this repo's folder.
   * **for development** load the `build/` folder instead!
-5. visit any comments page on reddit
+5. go look at reddit!
 
 ## updating
 

@@ -1,35 +1,13 @@
-!function() {
-  'use strict';
+'use strict';
 
-  window.initPlugin(
-    'live-comments',
-    'pulls comments into reddit live threads from related discussions',
-    plugin);
+import Plugin from '../../jsx/plugin';
+import Location from '../../jsx/location';
 
-  function plugin(context, store) {
-    var Comment = React.createClass({
-      render() {
-        return <li className="liveupdate">
-          <a href="#">
-            <time className="live-timestamp">some time ago</time>
-          </a>
-          <div className="body reddit-prototype-live-comment">
-            <header>
-              by <a className="reddit-prototype-live-comment-author">{'/u/' + this.props.author}</a>
-              &nbsp;
-              from discussion in 
-              <a className="reddit-prototype-live-comment-subreddit"
-                 href={this.props.discussionLink}>{'/r/' + this.props.subreddit}</a>
-              &nbsp;|&nbsp;
-              <span className="reddit-prototype-live-comment-score">{this.props.score + ' points'}</span>
-            </header>
-            <div className="md-container"
-                 dangerouslySetInnerHTML={{ __html: context.unsafe(this.props.body_html) }} />
-          </div>
-        </li>;
-      }
-    });
+import Comment from './comment';
 
+
+export default class LiveCommentsPlugin extends Plugin {
+  run() {
     $(function() {
       var $discussionLinks = $('#discussions > div > p > a');
 
@@ -37,7 +15,7 @@
 
       var topDiscussionLink = $discussionLinks[0];
 
-      var path = context.parseURL(topDiscussionLink.href).pathname + '.json?sort=new';
+      var path = Location.parseURL(topDiscussionLink.href).pathname + '.json?sort=new';
 
       $.get(path).then(function(res) {
         if (!res || res.length !== 2) { return; } 
@@ -80,4 +58,10 @@
       });
     });
   }
-}();
+}
+
+LiveCommentsPlugin.meta = {
+  displayName: 'Live Comment Gnomes',
+  description: `pulls comments into reddit live threads from related discussions`,
+  cssClassName: 'live-comments',
+};

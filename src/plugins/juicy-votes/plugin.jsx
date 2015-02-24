@@ -1,12 +1,10 @@
-!function() {
-  'use strict';
+'use strict';
 
-  window.initPlugin(
-    'juicy-votes',
-    'adds juicy animations to vote arrows.  that\'s right. juicy.',
-    plugin);
-  
-  function plugin(context) {
+import Plugin from '../../jsx/plugin';
+
+
+export default class JuicyVotesPlugin extends Plugin {
+  run() {
     $('.arrow').on('click', function() {
       var $this = $(this);
 
@@ -17,4 +15,10 @@
       }
     });
   }
-}();
+}
+
+JuicyVotesPlugin.meta = {
+  displayName: 'Juicy Gnome Votes',
+  description: `adds juicy animations to vote arrows. that's right. juicy.`,
+  cssClassName: 'juicy-votes',
+};
