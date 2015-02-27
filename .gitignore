@@ -3,3 +3,4 @@ node_modules/
 /build/
 source/
 src/dev_plugins/
+src/jsx/plugin-loader.jsx

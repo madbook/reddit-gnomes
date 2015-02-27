@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-less');
   grunt.loadNpmTasks('grunt-contrib-watch');
@@ -90,6 +92,9 @@ module.exports = function(grunt) {
         ],
       },
     },
+    buildplugins: {
+      development: {},
+    },
   });
 
 
@@ -139,6 +144,15 @@ module.exports = function(grunt) {
     ['external_daemon:getExtensionTabId', 'exec:reloadChromeTab']
   );
 
-  grunt.registerTask('default', ['browserify', 'less:development', 'copy:development', 'chrome_extension_reload']);
-  grunt.registerTask('package', ['browserify', 'less:production', 'copy:production']);
+  grunt.registerMultiTask('buildplugins', 'Builds the plugin-loader module.', function () {
+    var plugins = fs.readdirSync('./src/plugins');
+
+
+    var lines = plugins.map(function(x) { return "import {"+x+"} from '../plugins/"+x+"/plugin';"; });
+    lines.push("export default [" + plugins.toString() + "];");
+    fs.writeFileSync('./src/jsx/plugin-loader.jsx', lines.join('\n'));
+  });
+
+  grunt.registerTask('default', ['buildplugins', 'browserify', 'less:development', 'copy:development', 'chrome_extension_reload']);
+  grunt.registerTask('package', ['buildplugins', 'browserify', 'less:production', 'copy:production']);
 };
