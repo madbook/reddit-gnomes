@@ -36,7 +36,7 @@ export default class ReadNextPlugin extends Plugin {
       after: fullname,
     });
     var requestPath = `/r/${subreddit}.json?${params}`;
-    var mountNode = document.createElement('div');
+    var mountNode = $.parseHTML(`<div class="reddit-read-next-mount"></div>`)[0];
     var $mountNode = $(mountNode);
 
     var { lockToBottom } = this.state;
