@@ -1,6 +1,6 @@
 'use strict';
 
-import { pluginClasses } from './plugin-loader';
+import pluginClasses from './plugin-loader';
 
 var plugins = {
   map: {},
