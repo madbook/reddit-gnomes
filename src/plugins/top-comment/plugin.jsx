@@ -37,13 +37,11 @@ export default class TopCommentPlugin extends Plugin {
       $this.find('.buttons').append($.parseHTML(buttonTemplate));
     });
 
-    $('#siteTable').on('click', 'a.reddit-prototype-top-comment', function(e) {
-      e.preventDefault();
+    let handleClick = ($elem) => {
+      let $parent = $elem.closest('.thing');
+      let fullname = $parent.data('fullname');
+      let id = fullname.split('_')[1];
 
-      var $this = $(this);
-      var $parent = $this.closest('.thing');
-      var fullname = $parent.data('fullname');
-      var id = fullname.split('_')[1];
       var pathObj
 
       if (onFrontpage) {
@@ -53,11 +51,18 @@ export default class TopCommentPlugin extends Plugin {
         pathObj = context;
       }
 
-      this.requestComments(pathObj.pathname, id, body => {
-        var node = $.parseHTML(commentTemplate(body));
+      this.requestComment(pathObj.pathname, id, body => {
+        let node = $.parseHTML(commentTemplate(body));
         $parent.find('.entry').append(node);
-        $this.remove();
+        $elem.remove();
       });
+    }
+
+    $('#siteTable').on('click', 'a.reddit-prototype-top-comment', function(e) {
+      let $this = $(this);
+
+      e.preventDefault();
+      handleClick($this);
     });
   }
 
