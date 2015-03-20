@@ -2461,38 +2461,43 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 var Location = _interopRequire(require("./location"));
 
-module.exports = new Location(location.pathname);
+module.exports = new Location(location.pathname + location.search);
 
 },{"./location":7}],6:[function(require,module,exports){
 "use strict";
-
-var _slicedToArray = function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { var _arr = []; for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) { _arr.push(_step.value); if (i && _arr.length === i) break; } return _arr; } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } };
 
 var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
-exports.getHook = getHook;
-exports.getAllHooks = getAllHooks;
-
 /*
-  hooks system lifted from reddit
-  see r2/r2/lib/hooks.py
+  super simplified hook system
+  to create a hook:
+
+      import hooks from '../../jsx/hooks';
+      hooks.call()
  */
 
-var _hooks = {};
+var _events = {};
 
 var Hook = (function () {
   function Hook() {
     _classCallCheck(this, Hook);
 
-    this._handlers = [];
+    this.handlers = new Set();
   }
 
   _prototypeProperties(Hook, null, {
-    registerHandler: {
-      value: function registerHandler(handler) {
-        this._handlers.push(handler);
+    on: {
+      value: function on(handler) {
+        return this.handlers.add(handler);
+      },
+      writable: true,
+      configurable: true
+    },
+    off: {
+      value: function off(handler) {
+        return this.handlers["delete"](handler);
       },
       writable: true,
       configurable: true
@@ -2503,25 +2508,11 @@ var Hook = (function () {
           args[_key] = arguments[_key];
         }
 
-        return this._handlers.map(function (handler) {
-          return handler.apply(null, args);
-        });
-      },
-      writable: true,
-      configurable: true
-    },
-    callUntilReturn: {
-      value: function callUntilReturn() {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
-        }
+        for (var _iterator = this.handlers[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
+          var handler = _step.value;
 
-        var res;
-        this._handlers.some(function (handler) {
-          res = handler.apply(null, args);
-          return res !== null && res !== undefined;
-        });
-        return res;
+          handler.apply(null, args);
+        }
       },
       writable: true,
       configurable: true
@@ -2531,72 +2522,10 @@ var Hook = (function () {
   return Hook;
 })();
 
-function getHook(name) {
-  return _hooks[name] || (_hooks[name] = new Hook());
-}
-
-function getAllHooks() {
-  return _hooks;
-}
-
-var HookRegistrar = exports.HookRegistrar = (function () {
-  function HookRegistrar() {
-    _classCallCheck(this, HookRegistrar);
-
-    this.registered = false;
-    this._connections = [];
-  }
-
-  _prototypeProperties(HookRegistrar, null, {
-    on: {
-      value: function on(name, fn) {
-        var _this = this;
-
-        var hook = getHook(name);
-        var handler = function () {
-          for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
-          }
-
-          return fn.apply(_this, args);
-        };
-
-        if (this.registered) {
-          hook.registerHandler(handler);
-        } else {
-          this._connections.push([hook, handler]);
-        }
-
-        return fn;
-      },
-      writable: true,
-      configurable: true
-    },
-    registerAll: {
-      value: function registerAll() {
-        var _this = this;
-
-        this._connections.forEach(function (connection) {
-          var _connection = _slicedToArray(connection, 2);
-
-          var hook = _connection[0];
-          var handler = _connection[1];
-
-          hook.registerHandler(handler);
-          _this.registered = true;
-        });
-      },
-      writable: true,
-      configurable: true
-    }
-  });
-
-  return HookRegistrar;
-})();
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+module.exports = {
+  get: function (name) {
+    return _events[name] || (_events[name] = new Hook());
+  } };
 
 },{}],7:[function(require,module,exports){
 "use strict";
@@ -2614,6 +2543,25 @@ var Location = (function () {
 
     var protocolMatch = url.match(protocolPattern);
     var protocol;
+
+    var queryParts = url.split("?");
+    var query = {};
+
+    if (queryParts.length > 1) {
+      url = queryParts[0];
+
+      queryParts.slice(1).join("?").split("&").forEach(function (pair) {
+        var parts = pair.split("=");
+        var key = parts[0];
+        var val = true;
+
+        if (parts.length === 2) {
+          val = parts[1];
+        }
+
+        query[key] = val;
+      });
+    }
 
     if (protocolMatch) {
       protocol = protocolMatch[0];
@@ -2646,6 +2594,7 @@ var Location = (function () {
     this.thing = thing;
     this.protocol = protocol;
     this.host = host;
+    this.query = query;
   }
 
   _prototypeProperties(Location, {
@@ -2703,7 +2652,47 @@ $(function () {
   });
 });
 
-},{"./plugins":10,"./store":12,"./utils":13,"babel/polyfill":4}],9:[function(require,module,exports){
+},{"./plugins":11,"./store":13,"./utils":14,"babel/polyfill":4}],9:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+/* do not edit this file
+   this file generated from the grunt buildplugins task */
+
+var plugins = [];
+
+var juicyvotes = _interopRequire(require("../plugins/juicy-votes/plugin"));
+
+plugins.push(juicyvotes);
+
+var livecomments = _interopRequire(require("../plugins/live-comments/plugin"));
+
+plugins.push(livecomments);
+
+var prefs = _interopRequire(require("../plugins/prefs/plugin"));
+
+plugins.push(prefs);
+
+var readnext = _interopRequire(require("../plugins/readnext/plugin"));
+
+plugins.push(readnext);
+
+var subredditsearch = _interopRequire(require("../plugins/subreddit-search/plugin"));
+
+plugins.push(subredditsearch);
+
+var test = _interopRequire(require("../plugins/test/plugin"));
+
+plugins.push(test);
+
+var topcomment = _interopRequire(require("../plugins/top-comment/plugin"));
+
+plugins.push(topcomment);
+
+module.exports = plugins;
+
+},{"../plugins/juicy-votes/plugin":15,"../plugins/live-comments/plugin":17,"../plugins/prefs/plugin":18,"../plugins/readnext/plugin":20,"../plugins/subreddit-search/plugin":22,"../plugins/test/plugin":23,"../plugins/top-comment/plugin":24}],10:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -2715,8 +2704,6 @@ var _inherits = function (subClass, superClass) { if (typeof superClass !== "fun
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
 var store = _interopRequire(require("./store"));
-
-var HookRegistrar = require("./hooks").HookRegistrar;
 
 var StoreModel = _interopRequire(require("./store-model"));
 
@@ -2802,7 +2789,7 @@ var Plugin = (function (StoreModel) {
 
 module.exports = Plugin;
 
-},{"./hooks":6,"./store":12,"./store-model":11}],10:[function(require,module,exports){
+},{"./store":13,"./store-model":12}],11:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -2810,17 +2797,7 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 exports.getPluginsList = getPluginsList;
 exports.getPlugins = getPlugins;
 
-var test = _interopRequire(require("../plugins/test/plugin"));
-
-var prefs = _interopRequire(require("../plugins/prefs/plugin"));
-
-var readnext = _interopRequire(require("../plugins/readnext/plugin"));
-
-var juicyvotes = _interopRequire(require("../plugins/juicy-votes/plugin"));
-
-var livecomments = _interopRequire(require("../plugins/live-comments/plugin"));
-
-var pluginClasses = [test, prefs, readnext, juicyvotes, livecomments];
+var pluginClasses = _interopRequire(require("./plugin-loader"));
 
 var plugins = {
   map: {},
@@ -2850,7 +2827,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-},{"../plugins/juicy-votes/plugin":14,"../plugins/live-comments/plugin":16,"../plugins/prefs/plugin":17,"../plugins/readnext/plugin":19,"../plugins/test/plugin":21}],11:[function(require,module,exports){
+},{"./plugin-loader":9}],12:[function(require,module,exports){
 "use strict";
 
 var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
@@ -2942,7 +2919,7 @@ var StoreModel = (function () {
 
 module.exports = StoreModel;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -2951,7 +2928,7 @@ var StoreModel = _interopRequire(require("./store-model"));
 
 module.exports = new StoreModel("reddit-gnomes");
 
-},{"./store-model":11}],13:[function(require,module,exports){
+},{"./store-model":12}],14:[function(require,module,exports){
 "use strict";
 
 exports.unsafe = unsafe;
@@ -2978,7 +2955,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -3030,7 +3007,7 @@ JuicyVotesPlugin.meta = {
   description: "adds juicy animations to vote arrows. that's right. juicy.",
   cssClassName: "juicy-votes" };
 
-},{"../../jsx/plugin":9}],15:[function(require,module,exports){
+},{"../../jsx/plugin":10}],16:[function(require,module,exports){
 "use strict";
 
 module.exports = React.createClass({
@@ -3082,7 +3059,7 @@ module.exports = React.createClass({
   }
 });
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -3188,7 +3165,7 @@ LiveCommentsPlugin.meta = {
   description: "pulls comments into reddit live threads from related discussions",
   cssClassName: "live-comments" };
 
-},{"../../jsx/location":7,"../../jsx/plugin":9,"./comment":15}],17:[function(require,module,exports){
+},{"../../jsx/location":7,"../../jsx/plugin":10,"./comment":16}],18:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -3205,7 +3182,7 @@ var context = _interopRequire(require("../../jsx/context"));
 
 var getPluginsList = require("../../jsx/plugins").getPluginsList;
 
-var getHook = require("../../jsx/hooks").getHook;
+var hooks = _interopRequire(require("../../jsx/hooks"));
 
 var _views = require("./views");
 
@@ -3237,7 +3214,8 @@ var PrefsPlugin = (function (Plugin) {
         var mountNode = document.createElement("div");
         var plugins = getPluginsList();
         var descriptor = this.buildDescriptor(plugins);;
-        var hook = getHook("init-prefs").call(descriptor);
+
+        hooks.get("init-prefs").call(descriptor);
 
         $(prefTable).find(".prefright").append(mountNode);
         $(".content form").eq(0).after(prefTable);
@@ -3278,7 +3256,7 @@ PrefsPlugin.meta = {
   displayName: "Gnome Preferences",
   description: "creates UI on the user preference page to enable and \ndisable plugins" };
 
-},{"../../jsx/context":5,"../../jsx/hooks":6,"../../jsx/plugin":9,"../../jsx/plugins":10,"./views":18}],18:[function(require,module,exports){
+},{"../../jsx/context":5,"../../jsx/hooks":6,"../../jsx/plugin":10,"../../jsx/plugins":11,"./views":19}],19:[function(require,module,exports){
 "use strict";
 
 var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
@@ -3402,7 +3380,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-},{"../../jsx/utils":13}],19:[function(require,module,exports){
+},{"../../jsx/utils":14}],20:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -3419,7 +3397,7 @@ var context = _interopRequire(require("../../jsx/context"));
 
 var Plugin = _interopRequire(require("../../jsx/plugin"));
 
-var HookRegistrar = require("../../jsx/hooks").HookRegistrar;
+var hooks = _interopRequire(require("../../jsx/hooks"));
 
 var ReadNext = _interopRequire(require("./views"));
 
@@ -3454,16 +3432,12 @@ var ReadNextPlugin = (function (Plugin) {
       value: function setup() {
         var _this = this;
 
-        var hooks = new HookRegistrar();
-
-        hooks.on("init-prefs", function (descriptor) {
+        hooks.get("init-prefs").on(function (descriptor) {
           descriptor[_this.name].push({
             property: "lockToBottom",
             displayName: "Lock to Bottom",
             description: "lock the widget in the bottom corner instead of the top" });
         });
-
-        hooks.registerAll();
       },
       writable: true,
       configurable: true
@@ -3480,7 +3454,7 @@ var ReadNextPlugin = (function (Plugin) {
           count: "10",
           after: fullname });
         var requestPath = "/r/" + subreddit + ".json?" + params;
-        var mountNode = document.createElement("div");
+        var mountNode = $.parseHTML("<div class=\"reddit-read-next-mount\"></div>")[0];
         var $mountNode = $(mountNode);
 
         var lockToBottom = this.state.lockToBottom;
@@ -3527,7 +3501,7 @@ ReadNextPlugin.meta = {
   displayName: "Read Next Gnome",
   description: "adds a widget to the sidebar on comments page that suggests\nnext posts" };
 
-},{"../../jsx/context":5,"../../jsx/hooks":6,"../../jsx/plugin":9,"./views":20}],20:[function(require,module,exports){
+},{"../../jsx/context":5,"../../jsx/hooks":6,"../../jsx/plugin":10,"./views":21}],21:[function(require,module,exports){
 "use strict";
 
 var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -3748,7 +3722,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -3761,7 +3735,213 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
 
 var Plugin = _interopRequire(require("../../jsx/plugin"));
 
-var HookRegistrar = require("../../jsx/hooks").HookRegistrar;
+var context = _interopRequire(require("../../jsx/context"));
+
+var isSubreddit = function (result) {
+  return result.kind === "t5";
+};
+
+var isPost = function (result) {
+  return result.kind === "t3";
+};
+
+var fakeThumbnails = new Set(["self", "default", "nsfw"]);
+
+var hasThumbnail = function (result) {
+  var thumbnail = result.data.thumbnail;
+
+  return thumbnail && !fakeThumbnails.has(thumbnail);
+};
+
+var classSet = function (classDesc) {
+  return Object.keys(classDesc).filter(function (key) {
+    return classDesc[key];
+  }).join(" ");
+};
+
+var getTemplateClasses = function (result) {
+  return classSet({
+    "gnome-sr-search-result": true,
+    "gnome-sr-post-result": isPost(result),
+    "gnome-sr-subreddit-result": isSubreddit(result),
+    "gnome-sr-has-thumbnail": hasThumbnail(result) });
+};
+
+var renderPostThumbnail = function (result) {
+  if (!hasThumbnail(result)) {
+    return "";
+  }
+
+  return "<div class=\"gnome-sr-thumbnail\">\n    <img src=\"" + result.data.thumbnail + "\">\n  </div>";
+};
+
+var queryPattern = new RegExp("(" + context.query.q + ")", "igm");
+
+var highlightQuery = function (text) {
+  return text.replace(queryPattern, "<strong>$1</strong>");
+};
+
+var renderPostSelftext = function (result) {
+  if (!result.data.selftext) {
+    return "";
+  }
+
+  return "<div class=\"gnome-sr-description\">\n    " + highlightQuery(result.data.selftext) + "\n  </div>";
+};
+
+var getIconClasses = function (type) {
+  return "gnome-sr-icon gnome-sr-icon-" + type;
+};
+
+var renderIconLink = function (iconType, url, displayText) {
+  if (!url) {
+    return "";
+  }
+
+  if (!displayText) {
+    displayText = url;
+  }
+
+  var iconLinkClasses = getIconClasses(iconType);
+
+  return "<div class=\"gnome-sr-link-container\">\n    <span class=\"" + iconLinkClasses + "\"></span>\n    <a class=\"gnome-sr-link\" href=\"" + url + "\">" + displayText + "</a>\n  </div>";
+};
+
+var renderPostLink = function (result) {
+  return renderIconLink("external", result.data.url);
+};
+
+var renderPostResult = function (result) {
+  return "<!-- post result type -->\n  " + renderPostThumbnail(result) + "\n  <div class=\"gnome-sr-title-container\">\n    <a class=\"gnome-sr-title\" href=\"" + result.data.permalink + "\">\n       " + highlightQuery(result.data.title) + "</a>\n    <a class=\"gnome-sr-subtitle\" href=\"/r/" + result.data.subreddit + "\">\n       /r/" + highlightQuery(result.data.subreddit) + "</a>\n  </div>\n  <div class=\"gnome-sr-meta\">\n    " + result.data.score + " points,\n    " + result.data.num_comments + " comments,\n    submitted [some time] ago\n    by " + result.data.author + "\n  </div>\n  " + renderPostSelftext(result) + "\n  " + renderPostLink(result);
+};
+
+var renderSubredditRelation = function (result) {
+  var label = "";
+
+  if (result.data.user_is_moderator) {
+    label = "moderator";
+  } else if (result.data.user_is_contributor) {
+    label = "contributor";
+  } else if (result.data.user_is_subsriber) {
+    label = "subscribed";
+  }
+
+  if (!label) {
+    return "";
+  }
+
+  return "<span class=\"gnome-sr-subreddit-relation\">" + label + "</span>";
+};
+
+var renderSubredditDescription = function (result) {
+  if (!result.data.public_description) {
+    return "";
+  }
+
+  return "<div class=\"gnome-sr-description\">\n    " + highlightQuery(result.data.public_description) + "\n  </div>";
+};
+
+var renderSubredditFilterLink = function (result) {
+  return renderIconLink("filter", result.data.url, "search in " + result.data.url);
+};
+
+var renderSubredditResult = function (result) {
+  return "<!-- subreddit result type -->\n  <div class=\"gnome-sr-title-container\">\n    <a class=\"gnome-sr-title\" href=\"" + result.data.url + "\">\n       " + highlightQuery(result.data.title) + "</a>\n    <a class=\"gnome-sr-subtitle\" href=\"" + result.data.url + "\">\n       /r/" + highlightQuery(result.data.display_name) + "</a>\n  </div>\n  <div class=\"gnome-sr-meta\">\n    " + renderSubredditRelation(result) + "\n    " + result.data.subscribers + " subscribers,\n    a community for [some time].\n  </div>\n  " + renderSubredditDescription(result) + "\n  " + renderSubredditFilterLink(result);
+};
+
+var renderResult = function (result) {
+  var content = "";
+
+  if (isSubreddit(result)) {
+    content = renderSubredditResult(result);
+  } else if (isPost(result)) {
+    content = renderPostResult(result);
+  }
+
+  if (!content) {
+    return "";
+  }
+
+  return "<div class=\"" + getTemplateClasses(result) + "\">" + content + "</div>";
+};
+
+var renderGroup = function (name, contents) {
+  return "<div class=\"gnome-sr-result-group\">\n  <div class=\"gnome-sr-result-group-header\">\n    " + name + "\n  </div>\n  <div class=\"gnome-sr-result-group-contents\">\n    " + contents.join("\n") + "\n  </div>\n  <div class=\"gnome-sr-more-results-container\">\n    <a class=\"gnome-sr-more-results\" href=\"#\">more " + name + " results »</a>\n  </div>\n</div>";
+};
+
+var renderSearchForm = function (defaultVal) {
+  return "<div class=\"gnome-sr-search-form\">\n  <form action=\"/subreddit-search\" method=\"GET\">\n    <input name=\"q\" value=\"" + defaultVal + "\" placeholder=\"search\">\n  </form>\n</div>";
+};
+
+var SubredditSearch = (function (Plugin) {
+  function SubredditSearch() {
+    _classCallCheck(this, SubredditSearch);
+
+    if (Plugin != null) {
+      Plugin.apply(this, arguments);
+    }
+  }
+
+  _inherits(SubredditSearch, Plugin);
+
+  _prototypeProperties(SubredditSearch, null, {
+    shouldRun: {
+      value: function shouldRun() {
+        return context.page === "subreddit-search";
+      },
+      writable: true,
+      configurable: true
+    },
+    run: {
+      value: function run() {
+        var searchQuery = location.search.slice(3);
+        var $container = $("body > div.content");
+
+        $container.empty();
+        $("#header .pagename").text("search + subreddits");
+
+        if (searchQuery) {
+          var postSearch = $.get("/search.json" + location.search).then(function (res) {
+            return res.data.children.map(renderResult);
+          });
+          var subredditSearch = $.get("/subreddits/search.json" + location.search).then(function (res) {
+            return res.data.children.map(renderResult);
+          });
+          $.when(postSearch, subredditSearch).then(function (posts, subreddits) {
+            $container.html("<div class=\"gnome-sr-page\">\n          " + renderSearchForm(searchQuery) + "\n          " + renderGroup("subreddits", subreddits.slice(0, 5)) + "\n          " + renderGroup("posts", posts) + "\n        </div>");
+          });
+        } else {
+          $container.html("<div class=\"gnome-sr-page\">\n          " + renderSearchForm(searchQuery) + "\n        </div>");
+        }
+      },
+      writable: true,
+      configurable: true
+    }
+  });
+
+  return SubredditSearch;
+})(Plugin);
+
+module.exports = SubredditSearch;
+
+SubredditSearch.meta = {
+  displayName: "Subreddit Search",
+  description: "mockup of subreddits in search results" };
+
+},{"../../jsx/context":5,"../../jsx/plugin":10}],23:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var Plugin = _interopRequire(require("../../jsx/plugin"));
+
+var hooks = _interopRequire(require("../../jsx/hooks"));
 
 var template = function (classFound) {
   return "--------\ntest init function has run!\nthe html element does " + (classFound ? "" : "not ") + "have the \n'gnome-test' class.\n--------";
@@ -3791,16 +3971,12 @@ var TestPlugin = (function (Plugin) {
       value: function setup() {
         var _this = this;
 
-        var hooks = new HookRegistrar();
-
-        hooks.on("init-prefs", function (descriptor) {
+        hooks.get("init-prefs").on(function (descriptor) {
           descriptor[_this.name].push({
             property: "testing",
             displayName: "Testing",
             description: "nothing to see here" });
         });
-
-        hooks.registerAll();
       },
       writable: true,
       configurable: true
@@ -3824,4 +4000,133 @@ TestPlugin.meta = {
   displayName: "Gnome Test",
   description: "checks for the existence of the gnome css class" };
 
-},{"../../jsx/hooks":6,"../../jsx/plugin":9}]},{},[8]);
+},{"../../jsx/hooks":6,"../../jsx/plugin":10}],24:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+
+var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var Plugin = _interopRequire(require("../../jsx/plugin"));
+
+var context = _interopRequire(require("../../jsx/context"));
+
+var Location = _interopRequire(require("../../jsx/location"));
+
+var unsafe = require("../../jsx/utils").unsafe;
+
+var buttonTemplate = "<li>\n  <a class=\"reddit-prototype-top-comment\" href=\"#\">[top comment]</a>\n</li>";
+
+var commentTemplate = function (body) {
+  return "<div class=\"reddit-prototype-top-comment-text md-container\">\n  " + body + "\n</div>";
+};
+
+var TopCommentPlugin = (function (Plugin) {
+  function TopCommentPlugin() {
+    _classCallCheck(this, TopCommentPlugin);
+
+    if (Plugin != null) {
+      Plugin.apply(this, arguments);
+    }
+  }
+
+  _inherits(TopCommentPlugin, Plugin);
+
+  _prototypeProperties(TopCommentPlugin, null, {
+    shouldRun: {
+      value: function shouldRun() {
+        return _get(Object.getPrototypeOf(TopCommentPlugin.prototype), "shouldRun", this).call(this) && !context.page;
+      },
+      writable: true,
+      configurable: true
+    },
+    run: {
+      value: function run() {
+        var _this = this;
+
+        var $things = $("#siteTable .thing");
+
+        if (!$things.length) {
+          return;
+        }
+
+        var onFrontpage = !context.subreddit;
+
+        $things.each(function () {
+          var $this = $(this);
+          // check the number of comments first
+          var comments = parseInt($this.find(".comments").text().split(" ")[0], 10) | 0;
+
+          if (!comments) {
+            return;
+          }
+
+          $this.find(".buttons").append($.parseHTML(buttonTemplate));
+        });
+
+        var handleClick = function ($elem) {
+          var $parent = $elem.closest(".thing");
+          var fullname = $parent.data("fullname");
+          var id = fullname.split("_")[1];
+
+          var pathObj;
+
+          if (onFrontpage) {
+            var parentURL = $parent.find("a.subreddit").attr("href");
+            pathObj = Location.parseURL(parentURL);
+          } else {
+            pathObj = context;
+          }
+
+          _this.requestComment(pathObj.pathname, id, function (body) {
+            var node = $.parseHTML(commentTemplate(body));
+            $parent.find(".entry").append(node);
+            $elem.remove();
+          });
+        };
+
+        $("#siteTable").on("click", "a.reddit-prototype-top-comment", function (e) {
+          var $this = $(this);
+
+          e.preventDefault();
+          handleClick($this);
+        });
+      },
+      writable: true,
+      configurable: true
+    },
+    requestComment: {
+      value: function requestComment(pathname, id, cb) {
+        var params = $.param({
+          limit: 1,
+          sort: "top" });
+        var path = "" + pathname + "/comments/" + id + ".json?" + params;
+
+        $.get(path).then(function (res) {
+          var comment = res[1].data.children[0].data;
+          var body = unsafe(comment.body_html);
+          cb(body);
+        });
+      },
+      writable: true,
+      configurable: true
+    }
+  });
+
+  return TopCommentPlugin;
+})(Plugin);
+
+module.exports = TopCommentPlugin;
+
+TopCommentPlugin.meta = {
+  displayName: "Top Comment Gnome",
+  description: "adds a link to posts on listing pages to load the top comment inline",
+  cssClassName: "top-comment" };
+
+},{"../../jsx/context":5,"../../jsx/location":7,"../../jsx/plugin":10,"../../jsx/utils":14}]},{},[8]);

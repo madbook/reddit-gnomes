@@ -1,0 +1,158 @@
+@color-dark-grey: #808080;
+@color-pale-grey: #E5E3Da;
+@color-alien-blue: #0079D3;
+@color-text-grey: #4f4f4f;
+
+.gnome-subreddit-search {
+  // styles for this plugin go here
+  // .gnome-test class is appended to the html element on page load if this
+  // plugin is enabled
+
+  body > .content {
+    margin: 0;
+  }
+
+  strong {
+    font-weight: bold;
+  }
+}
+
+.gnome-sr-search-result {
+  margin: 10px 0 30px;
+}
+.gnome-sr-post-result {
+  .gnome-sr-subtitle {
+    color: @color-dark-grey;
+    &:before {
+      content: "in ";
+    }
+  }
+}
+.gnome-sr-subreddit-result {
+  .gnome-sr-subtitle {
+    &:before {
+      content: " ";
+    }
+  }
+}
+.gnome-sr-has-thumbnail {
+  & > *:not(.gnome-sr-thumbnail) {
+    margin-left: 80px;
+  }
+}
+.gnome-sr-thumbnail {
+  width: 70px;
+  float: left;
+
+  img {
+    display: block;
+    width: 70px;
+    height: auto;
+  }
+}
+.gnome-sr-description {
+  font-size: 12px;
+  line-height:15px;
+  color: @color-text-grey;
+  max-height: 45px;
+  overflow: hidden;
+}
+.gnome-sr-icon {
+  display: inline-block;
+  width: 16px;
+  height: 15px;
+  background-repeat: no-repeat;
+  background-position: center;
+  vertical-align: top;
+}
+.gnome-sr-icon-external {
+  background-image: data-uri('external-link-icon.png');
+  background-size: 15px 7px;
+}
+.gnome-sr-icon-filter {
+  background-image: data-uri('search-icon.png');
+  background-size: 11px 12px;
+}
+.gnome-sr-icon-internal {
+  background-image: data-uri('internal-link-icon.png');
+  background-size: 11px 10px;
+}
+.gnome-sr-link-container {
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.gnome-sr-link {
+  color: @color-alien-blue;
+}
+.gnome-sr-title-container {
+
+}
+.gnome-sr-title {
+  font-size: 16px;
+  line-height: 20px;
+  color: @color-alien-blue;
+  margin-right: 5px;
+}
+.gnome-sr-subtitle {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 20px;
+}
+.gnome-sr-meta {
+  font-size: 12px;
+  line-height: 20px;
+  color: @color-dark-grey;
+}
+.gnome-sr-subreddit-relation {
+
+}
+.gnome-sr-result-group {
+  padding-left: 20px;
+}
+.gnome-sr-result-group-header {
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 20px;
+  color: @color-dark-grey;
+
+  border-bottom: 2px solid @color-pale-grey;
+  margin: 40px 0 20px;
+}
+.gnome-sr-result-group-contents {
+
+}
+.gnome-sr-more-results-container {
+
+}
+.gnome-sr-more-results {
+  color: @color-alien-blue;
+  font-size: 14px;
+  line-height: 20px;
+  margin-top: 10px;
+  margin-bottom: 30px;
+}
+.gnome-sr-page {
+  margin-right: 300px;
+  max-width: 800px;
+}
+.gnome-sr-search-form {
+  background-color: @color-pale-grey;
+
+  form {
+    padding: 20px;
+  }
+
+  input[name=q] {
+    display: inline-block;
+    font-size: 14px;
+    line-height: 20px;
+    color: @color-text-grey;
+    padding: 10px;
+    border: 1px solid @color-dark-grey;
+    box-sizing: border-box;
+    width: 300px;
+  }
+}
