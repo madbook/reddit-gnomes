@@ -2,4 +2,4 @@
 
 import Location from './location';
 
-export default new Location(location.pathname);
+export default new Location(location.pathname + location.search);

@@ -12,6 +12,28 @@ export default class Location {
     var protocolMatch = url.match(protocolPattern);
     var protocol;
 
+    let queryParts = url.split('?');
+    let query = {};
+    
+    if (queryParts.length > 1) {
+      url = queryParts[0];
+
+      queryParts.slice(1)
+      .join('?')
+      .split('&')
+      .forEach(pair => {
+        let parts = pair.split('=')
+        let key = parts[0];
+        let val = true;
+        
+        if (parts.length === 2) {
+          val = parts[1];
+        }
+
+        query[key] = val;
+      });
+    }
+
     if (protocolMatch) {
       protocol = protocolMatch[0];
       url = url.replace(protocol, '');
@@ -43,5 +65,6 @@ export default class Location {
     this.thing = thing;
     this.protocol = protocol;
     this.host = host;
+    this.query = query;
   }
 }
