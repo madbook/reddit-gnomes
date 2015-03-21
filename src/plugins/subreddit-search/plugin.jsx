@@ -197,7 +197,7 @@ export default class SubredditSearch extends Plugin {
       $.when.apply($, searchResults)
       .then((posts, subreddits) => {
         if (posts && posts.length) {
-          posts = renderGroup('subreddits', posts.map(x => renderResult(x)));
+          posts = renderGroup('posts', posts.map(x => renderResult(x)));
         } else {
           posts = '';
         }
