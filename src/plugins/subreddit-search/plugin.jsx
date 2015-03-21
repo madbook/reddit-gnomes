@@ -181,15 +181,54 @@ export default class SubredditSearch extends Plugin {
     $('#header .pagename').text('search + subreddits');
 
     if (searchQuery) {
-      let postSearch = $.get(`/search.json${location.search}`)
-                       .then(res => res.data.children.map(renderResult));
-      let subredditSearch = $.get(`/subreddits/search.json${location.search}`)
-                            .then(res => res.data.children.map(renderResult));
-      $.when(postSearch, subredditSearch).then((posts, subreddits) => {
+      var postSearchEndpoint;
+      
+      let searches = [];
+
+      if (context.subreddit) {
+        searches.push(`/r/${context.subreddit}/search.json${location.search}`);
+      } else {
+        searches.push(`/search.json${location.search}`);
+        searches.push(`/subreddits/search.json${location.search}&limit=5`);
+      }
+
+      let searchResults = searches.map(query => $.get(query).then(res => res.data.children));
+
+      $.when.apply($, searchResults)
+      .then((posts, subreddits) => {
+        if (posts && posts.length) {
+          posts = renderGroup('subreddits', posts.map(x => renderResult(x)));
+        } else {
+          posts = '';
+        }
+
+        var exactMatch = '';
+
+        if (subreddits) {
+          let testDisplayName = subreddits[0].data.display_name.toLowerCase();
+          let testQuery = context.query.q.toLowerCase();
+
+          if (testDisplayName === testQuery) {
+            exactMatch = `<div class="gnome-sr-result-group">
+              <div class="gnome-sr-result-group-contents">
+                ${renderResult(subreddits[0])}
+              </div>
+            </div>`;
+            subreddits = subreddits.slice(1);
+          }
+        } 
+
+        if (subreddits && subreddits.length) {
+          subreddits = renderGroup('subreddits', subreddits.map(x => renderResult(x)));
+        } else {
+          subreddits = '';
+        }
+        
         $container.html(`<div class="gnome-sr-page">
           ${renderSearchForm(searchQuery)}
-          ${renderGroup('subreddits', subreddits.slice(0, 5))}
-          ${renderGroup('posts', posts)}
+          ${exactMatch}
+          ${subreddits}
+          ${posts}
         </div>`);
       });
     } else {
