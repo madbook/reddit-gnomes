@@ -204,7 +204,7 @@ export default class SubredditSearch extends Plugin {
 
         var exactMatch = '';
 
-        if (subreddits) {
+        if (subreddits && subreddits.length) {
           let testDisplayName = subreddits[0].data.display_name.toLowerCase();
           let testQuery = context.query.q.toLowerCase();
 
