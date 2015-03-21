@@ -116,7 +116,7 @@ const renderSubredditDescription = (result) => {
 }
 
 const renderSubredditFilterLink = (result) => renderIconLink('filter',
-                                                `${result.data.url}subreddit-search${location.search}`,
+                                                `${result.data.url}subreddit-search${location.search}&restrict_sr=on`,
                                                 `search in ${result.data.url}`);
 
 const renderSubredditResult = (result) => `<!-- subreddit result type -->
