@@ -150,7 +150,7 @@ const renderResult = (result) => {
   return `<div class="${getTemplateClasses(result)}">${content}</div>`;
 }
 
-const renderGroup = (name, contents) => `<div class="gnome-sr-result-group">
+const renderGroup = (name, contents, moreLink) => `<div class="gnome-sr-result-group">
   <div class="gnome-sr-result-group-header">
     ${name}
   </div>
@@ -158,7 +158,7 @@ const renderGroup = (name, contents) => `<div class="gnome-sr-result-group">
     ${contents.join('\n')}
   </div>
   <div class="gnome-sr-more-results-container">
-    <a class="gnome-sr-more-results" href="#">more ${name} results »</a>
+    <a class="gnome-sr-more-results" href="${moreLink}">more ${name} results »</a>
   </div>
 </div>`;
 
@@ -196,13 +196,23 @@ export default class SubredditSearch extends Plugin {
 
       $.when.apply($, searchResults)
       .then((posts, subreddits) => {
-        if (posts && posts.length) {
-          posts = renderGroup('posts', posts.map(x => renderResult(x)));
-        } else {
-          posts = '';
-        }
-
         var exactMatch = '';
+        var renderedSubreddits = '';
+        var renderedPosts = '';
+        
+        if (posts && posts.length) {
+          renderedPosts = posts.map(x => renderResult(x));
+          let moreLink = '/search' + location.search;
+          
+          if (context.subreddit) {
+            moreLink = `/r/${context.subreddit}${moreLink}`
+          }
+
+          let lastPost = posts[posts.length - 1];
+          moreLink += `&after=${lastPost.data.name}`;
+
+          renderedPosts = renderGroup('posts', renderedPosts, moreLink);
+        }
 
         if (subreddits && subreddits.length) {
           let testDisplayName = subreddits[0].data.display_name.toLowerCase();
@@ -219,16 +229,18 @@ export default class SubredditSearch extends Plugin {
         } 
 
         if (subreddits && subreddits.length) {
-          subreddits = renderGroup('subreddits', subreddits.map(x => renderResult(x)));
-        } else {
-          subreddits = '';
+          renderedSubreddits = subreddits.map(x => renderResult(x));
+          let moreLink = '/subreddits/search' + location.search;
+          let lastSubreddit = subreddits[subreddits.length - 1];
+          moreLink += `&after=${lastSubreddit.data.name}`;
+          renderedSubreddits = renderGroup('subreddits', renderedSubreddits, moreLink);
         }
         
         $container.html(`<div class="gnome-sr-page">
           ${renderSearchForm(searchQuery)}
           ${exactMatch}
-          ${subreddits}
-          ${posts}
+          ${renderedSubreddits}
+          ${renderedPosts}
         </div>`);
       });
     } else {
