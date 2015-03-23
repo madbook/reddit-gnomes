@@ -3842,7 +3842,7 @@ var renderSubredditDescription = function (result) {
 };
 
 var renderSubredditFilterLink = function (result) {
-  return renderIconLink("filter", result.data.url, "search in " + result.data.url);
+  return renderIconLink("filter", "" + result.data.url + "subreddit-search" + location.search + "&restrict_sr=on", "search in " + result.data.url);
 };
 
 var renderSubredditResult = function (result) {
@@ -3865,8 +3865,8 @@ var renderResult = function (result) {
   return "<div class=\"" + getTemplateClasses(result) + "\">" + content + "</div>";
 };
 
-var renderGroup = function (name, contents) {
-  return "<div class=\"gnome-sr-result-group\">\n  <div class=\"gnome-sr-result-group-header\">\n    " + name + "\n  </div>\n  <div class=\"gnome-sr-result-group-contents\">\n    " + contents.join("\n") + "\n  </div>\n  <div class=\"gnome-sr-more-results-container\">\n    <a class=\"gnome-sr-more-results\" href=\"#\">more " + name + " results »</a>\n  </div>\n</div>";
+var renderGroup = function (name, contents, moreLink) {
+  return "<div class=\"gnome-sr-result-group\">\n  <div class=\"gnome-sr-result-group-header\">\n    " + name + "\n  </div>\n  <div class=\"gnome-sr-result-group-contents\">\n    " + contents.join("\n") + "\n  </div>\n  <div class=\"gnome-sr-more-results-container\">\n    <a class=\"gnome-sr-more-results\" href=\"" + moreLink + "\">more " + name + " results »</a>\n  </div>\n</div>";
 };
 
 var renderSearchForm = function (defaultVal) {
@@ -3901,14 +3901,65 @@ var SubredditSearch = (function (Plugin) {
         $("#header .pagename").text("search + subreddits");
 
         if (searchQuery) {
-          var postSearch = $.get("/search.json" + location.search).then(function (res) {
-            return res.data.children.map(renderResult);
+          var postSearchEndpoint;
+
+          var searches = [];
+
+          if (context.subreddit) {
+            searches.push("/r/" + context.subreddit + "/search.json" + location.search);
+          } else {
+            searches.push("/search.json" + location.search);
+            searches.push("/subreddits/search.json" + location.search + "&limit=5");
+          }
+
+          var searchResults = searches.map(function (query) {
+            return $.get(query).then(function (res) {
+              return res.data.children;
+            });
           });
-          var subredditSearch = $.get("/subreddits/search.json" + location.search).then(function (res) {
-            return res.data.children.map(renderResult);
-          });
-          $.when(postSearch, subredditSearch).then(function (posts, subreddits) {
-            $container.html("<div class=\"gnome-sr-page\">\n          " + renderSearchForm(searchQuery) + "\n          " + renderGroup("subreddits", subreddits.slice(0, 5)) + "\n          " + renderGroup("posts", posts) + "\n        </div>");
+
+          $.when.apply($, searchResults).then(function (posts, subreddits) {
+            var exactMatch = "";
+            var renderedSubreddits = "";
+            var renderedPosts = "";
+
+            if (posts && posts.length) {
+              renderedPosts = posts.map(function (x) {
+                return renderResult(x);
+              });
+              var moreLink = "/search" + location.search;
+
+              if (context.subreddit) {
+                moreLink = "/r/" + context.subreddit + "" + moreLink;
+              }
+
+              var lastPost = posts[posts.length - 1];
+              moreLink += "&after=" + lastPost.data.name;
+
+              renderedPosts = renderGroup("posts", renderedPosts, moreLink);
+            }
+
+            if (subreddits && subreddits.length) {
+              var testDisplayName = subreddits[0].data.display_name.toLowerCase();
+              var testQuery = context.query.q.toLowerCase();
+
+              if (testDisplayName === testQuery) {
+                exactMatch = "<div class=\"gnome-sr-result-group\">\n              <div class=\"gnome-sr-result-group-contents\">\n                " + renderResult(subreddits[0]) + "\n              </div>\n            </div>";
+                subreddits = subreddits.slice(1);
+              }
+            }
+
+            if (subreddits && subreddits.length) {
+              renderedSubreddits = subreddits.map(function (x) {
+                return renderResult(x);
+              });
+              var moreLink = "/subreddits/search" + location.search;
+              var lastSubreddit = subreddits[subreddits.length - 1];
+              moreLink += "&after=" + lastSubreddit.data.name;
+              renderedSubreddits = renderGroup("subreddits", renderedSubreddits, moreLink);
+            }
+
+            $container.html("<div class=\"gnome-sr-page\">\n          " + renderSearchForm(searchQuery) + "\n          " + exactMatch + "\n          " + renderedSubreddits + "\n          " + renderedPosts + "\n        </div>");
           });
         } else {
           $container.html("<div class=\"gnome-sr-page\">\n          " + renderSearchForm(searchQuery) + "\n        </div>");

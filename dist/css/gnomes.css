@@ -167,6 +167,7 @@
 }
 .gnome-sr-search-result {
   margin: 10px 0 30px;
+  overflow: auto;
 }
 .gnome-sr-post-result .gnome-sr-subtitle {
   color: #808080;
@@ -266,6 +267,7 @@
 }
 .gnome-sr-search-form {
   background-color: #e5e3da;
+  margin-bottom: 20px;
 }
 .gnome-sr-search-form form {
   padding: 20px;
