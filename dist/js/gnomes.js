@@ -2692,7 +2692,7 @@ plugins.push(topcomment);
 
 module.exports = plugins;
 
-},{"../plugins/juicy-votes/plugin":15,"../plugins/live-comments/plugin":17,"../plugins/prefs/plugin":18,"../plugins/readnext/plugin":20,"../plugins/subreddit-search/plugin":22,"../plugins/test/plugin":23,"../plugins/top-comment/plugin":24}],10:[function(require,module,exports){
+},{"../plugins/juicy-votes/plugin":15,"../plugins/live-comments/plugin":17,"../plugins/prefs/plugin":18,"../plugins/readnext/plugin":20,"../plugins/subreddit-search/plugin":22,"../plugins/test/plugin":24,"../plugins/top-comment/plugin":25}],10:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -3737,141 +3737,11 @@ var Plugin = _interopRequire(require("../../jsx/plugin"));
 
 var context = _interopRequire(require("../../jsx/context"));
 
-var isSubreddit = function (result) {
-  return result.kind === "t5";
-};
+var _templates = require("./templates");
 
-var isPost = function (result) {
-  return result.kind === "t3";
-};
-
-var fakeThumbnails = new Set(["self", "default", "nsfw"]);
-
-var hasThumbnail = function (result) {
-  var thumbnail = result.data.thumbnail;
-
-  return thumbnail && !fakeThumbnails.has(thumbnail);
-};
-
-var classSet = function (classDesc) {
-  return Object.keys(classDesc).filter(function (key) {
-    return classDesc[key];
-  }).join(" ");
-};
-
-var getTemplateClasses = function (result) {
-  return classSet({
-    "gnome-sr-search-result": true,
-    "gnome-sr-post-result": isPost(result),
-    "gnome-sr-subreddit-result": isSubreddit(result),
-    "gnome-sr-has-thumbnail": hasThumbnail(result) });
-};
-
-var renderPostThumbnail = function (result) {
-  if (!hasThumbnail(result)) {
-    return "";
-  }
-
-  return "<div class=\"gnome-sr-thumbnail\">\n    <img src=\"" + result.data.thumbnail + "\">\n  </div>";
-};
-
-var queryPattern = new RegExp("(" + context.query.q + ")", "igm");
-
-var highlightQuery = function (text) {
-  return text.replace(queryPattern, "<strong>$1</strong>");
-};
-
-var renderPostSelftext = function (result) {
-  if (!result.data.selftext) {
-    return "";
-  }
-
-  return "<div class=\"gnome-sr-description\">\n    " + highlightQuery(result.data.selftext) + "\n  </div>";
-};
-
-var getIconClasses = function (type) {
-  return "gnome-sr-icon gnome-sr-icon-" + type;
-};
-
-var renderIconLink = function (iconType, url, displayText) {
-  if (!url) {
-    return "";
-  }
-
-  if (!displayText) {
-    displayText = url;
-  }
-
-  var iconLinkClasses = getIconClasses(iconType);
-
-  return "<div class=\"gnome-sr-link-container\">\n    <span class=\"" + iconLinkClasses + "\"></span>\n    <a class=\"gnome-sr-link\" href=\"" + url + "\">" + displayText + "</a>\n  </div>";
-};
-
-var renderPostLink = function (result) {
-  return renderIconLink("external", result.data.url);
-};
-
-var renderPostResult = function (result) {
-  return "<!-- post result type -->\n  " + renderPostThumbnail(result) + "\n  <div class=\"gnome-sr-title-container\">\n    <a class=\"gnome-sr-title\" href=\"" + result.data.permalink + "\">\n       " + highlightQuery(result.data.title) + "</a>\n    <a class=\"gnome-sr-subtitle\" href=\"/r/" + result.data.subreddit + "\">\n       /r/" + highlightQuery(result.data.subreddit) + "</a>\n  </div>\n  <div class=\"gnome-sr-meta\">\n    " + result.data.score + " points,\n    " + result.data.num_comments + " comments,\n    submitted [some time] ago\n    by " + result.data.author + "\n  </div>\n  " + renderPostSelftext(result) + "\n  " + renderPostLink(result);
-};
-
-var renderSubredditRelation = function (result) {
-  var label = "";
-
-  if (result.data.user_is_moderator) {
-    label = "moderator";
-  } else if (result.data.user_is_contributor) {
-    label = "contributor";
-  } else if (result.data.user_is_subsriber) {
-    label = "subscribed";
-  }
-
-  if (!label) {
-    return "";
-  }
-
-  return "<span class=\"gnome-sr-subreddit-relation\">" + label + "</span>";
-};
-
-var renderSubredditDescription = function (result) {
-  if (!result.data.public_description) {
-    return "";
-  }
-
-  return "<div class=\"gnome-sr-description\">\n    " + highlightQuery(result.data.public_description) + "\n  </div>";
-};
-
-var renderSubredditFilterLink = function (result) {
-  return renderIconLink("filter", "" + result.data.url + "subreddit-search" + location.search + "&restrict_sr=on", "search in " + result.data.url);
-};
-
-var renderSubredditResult = function (result) {
-  return "<!-- subreddit result type -->\n  <div class=\"gnome-sr-title-container\">\n    <a class=\"gnome-sr-title\" href=\"" + result.data.url + "\">\n       " + highlightQuery(result.data.title) + "</a>\n    <a class=\"gnome-sr-subtitle\" href=\"" + result.data.url + "\">\n       /r/" + highlightQuery(result.data.display_name) + "</a>\n  </div>\n  <div class=\"gnome-sr-meta\">\n    " + renderSubredditRelation(result) + "\n    " + result.data.subscribers + " subscribers,\n    a community for [some time].\n  </div>\n  " + renderSubredditDescription(result) + "\n  " + renderSubredditFilterLink(result);
-};
-
-var renderResult = function (result) {
-  var content = "";
-
-  if (isSubreddit(result)) {
-    content = renderSubredditResult(result);
-  } else if (isPost(result)) {
-    content = renderPostResult(result);
-  }
-
-  if (!content) {
-    return "";
-  }
-
-  return "<div class=\"" + getTemplateClasses(result) + "\">" + content + "</div>";
-};
-
-var renderGroup = function (name, contents, moreLink) {
-  return "<div class=\"gnome-sr-result-group\">\n  <div class=\"gnome-sr-result-group-header\">\n    " + name + "\n  </div>\n  <div class=\"gnome-sr-result-group-contents\">\n    " + contents.join("\n") + "\n  </div>\n  <div class=\"gnome-sr-more-results-container\">\n    <a class=\"gnome-sr-more-results\" href=\"" + moreLink + "\">more " + name + " results »</a>\n  </div>\n</div>";
-};
-
-var renderSearchForm = function (defaultVal) {
-  return "<div class=\"gnome-sr-search-form\">\n  <form action=\"/subreddit-search\" method=\"GET\">\n    <input name=\"q\" value=\"" + defaultVal + "\" placeholder=\"search\">\n  </form>\n</div>";
-};
+var renderResult = _templates.renderResult;
+var renderGroup = _templates.renderGroup;
+var renderSearchForm = _templates.renderSearchForm;
 
 var SubredditSearch = (function (Plugin) {
   function SubredditSearch() {
@@ -3979,7 +3849,153 @@ SubredditSearch.meta = {
   displayName: "Subreddit Search",
   description: "mockup of subreddits in search results" };
 
-},{"../../jsx/context":5,"../../jsx/plugin":10}],23:[function(require,module,exports){
+},{"../../jsx/context":5,"../../jsx/plugin":10,"./templates":23}],23:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var context = _interopRequire(require("../../jsx/context"));
+
+var isSubreddit = function (result) {
+  return result.kind === "t5";
+};
+
+var isPost = function (result) {
+  return result.kind === "t3";
+};
+
+var fakeThumbnails = new Set(["self", "default", "nsfw"]);
+
+var hasThumbnail = function (result) {
+  var thumbnail = result.data.thumbnail;
+
+  return thumbnail && !fakeThumbnails.has(thumbnail);
+};
+
+var classSet = function (classDesc) {
+  return Object.keys(classDesc).filter(function (key) {
+    return classDesc[key];
+  }).join(" ");
+};
+
+var getTemplateClasses = function (result) {
+  return classSet({
+    "gnome-sr-search-result": true,
+    "gnome-sr-post-result": isPost(result),
+    "gnome-sr-subreddit-result": isSubreddit(result),
+    "gnome-sr-has-thumbnail": hasThumbnail(result) });
+};
+
+var renderPostThumbnail = function (result) {
+  if (!hasThumbnail(result)) {
+    return "";
+  }
+
+  return "<div class=\"gnome-sr-thumbnail\">\n    <img src=\"" + result.data.thumbnail + "\">\n  </div>";
+};
+
+var queryPattern = new RegExp("(" + context.query.q + ")", "igm");
+
+var highlightQuery = function (text) {
+  return text.replace(queryPattern, "<strong>$1</strong>");
+};
+
+var renderPostSelftext = function (result) {
+  if (!result.data.selftext) {
+    return "";
+  }
+
+  return "<div class=\"gnome-sr-description\">\n    " + highlightQuery(result.data.selftext) + "\n  </div>";
+};
+
+var getIconClasses = function (type) {
+  return "gnome-sr-icon gnome-sr-icon-" + type;
+};
+
+var renderIconLink = function (iconType, url, displayText) {
+  if (!url) {
+    return "";
+  }
+
+  if (!displayText) {
+    displayText = url;
+  }
+
+  var iconLinkClasses = getIconClasses(iconType);
+
+  return "<div class=\"gnome-sr-link-container\">\n    <span class=\"" + iconLinkClasses + "\"></span>\n    <a class=\"gnome-sr-link\" href=\"" + url + "\">" + displayText + "</a>\n  </div>";
+};
+
+var renderPostLink = function (result) {
+  return renderIconLink("external", result.data.url);
+};
+
+var renderPostResult = function (result) {
+  return "<!-- post result type -->\n  " + renderPostThumbnail(result) + "\n  <div class=\"gnome-sr-title-container\">\n    <a class=\"gnome-sr-title\" href=\"" + result.data.permalink + "\">\n       " + highlightQuery(result.data.title) + "</a>\n    <a class=\"gnome-sr-subtitle\" href=\"/r/" + result.data.subreddit + "\">\n       /r/" + highlightQuery(result.data.subreddit) + "</a>\n  </div>\n  <div class=\"gnome-sr-meta\">\n    " + result.data.score + " points,\n    " + result.data.num_comments + " comments,\n    submitted [some time] ago\n    by " + result.data.author + "\n  </div>\n  " + renderPostSelftext(result) + "\n  " + renderPostLink(result);
+};
+
+var renderSubredditRelation = function (result) {
+  var label = "";
+
+  if (result.data.user_is_moderator) {
+    label = "moderator";
+  } else if (result.data.user_is_contributor) {
+    label = "contributor";
+  } else if (result.data.user_is_subscriber) {
+    label = "subscribed";
+  }
+
+  if (!label) {
+    return "";
+  }
+
+  return "<span class=\"gnome-sr-subreddit-relation\">" + label + "</span>";
+};
+
+var renderSubredditDescription = function (result) {
+  if (!result.data.public_description) {
+    return "";
+  }
+
+  return "<div class=\"gnome-sr-description\">\n    " + highlightQuery(result.data.public_description) + "\n  </div>";
+};
+
+var renderSubredditFilterLink = function (result) {
+  return renderIconLink("filter", "" + result.data.url + "subreddit-search" + location.search + "&restrict_sr=on", "search in " + result.data.url);
+};
+
+var renderSubredditResult = function (result) {
+  return "<!-- subreddit result type -->\n  <div class=\"gnome-sr-title-container\">\n    <a class=\"gnome-sr-title\" href=\"" + result.data.url + "\">\n       " + highlightQuery(result.data.title) + "</a>\n    <a class=\"gnome-sr-subtitle\" href=\"" + result.data.url + "\">\n       /r/" + highlightQuery(result.data.display_name) + "</a>\n  </div>\n  <div class=\"gnome-sr-meta\">\n    " + renderSubredditRelation(result) + "\n    " + result.data.subscribers + " subscribers,\n    a community for [some time].\n  </div>\n  " + renderSubredditDescription(result) + "\n  " + renderSubredditFilterLink(result);
+};
+
+var renderResult = exports.renderResult = function (result) {
+  var content = "";
+
+  if (isSubreddit(result)) {
+    content = renderSubredditResult(result);
+  } else if (isPost(result)) {
+    content = renderPostResult(result);
+  }
+
+  if (!content) {
+    return "";
+  }
+
+  return "<div class=\"" + getTemplateClasses(result) + "\">" + content + "</div>";
+};
+
+var renderGroup = exports.renderGroup = function (name, contents, moreLink) {
+  return "<div class=\"gnome-sr-result-group\">\n  <div class=\"gnome-sr-result-group-header\">\n    " + name + "\n  </div>\n  <div class=\"gnome-sr-result-group-contents\">\n    " + contents.join("\n") + "\n  </div>\n  <div class=\"gnome-sr-more-results-container\">\n    <a class=\"gnome-sr-more-results\" href=\"" + moreLink + "\">more " + name + " results »</a>\n  </div>\n</div>";
+};
+
+var renderSearchForm = exports.renderSearchForm = function (defaultVal) {
+  return "<div class=\"gnome-sr-search-form\">\n  <form action=\"/subreddit-search\" method=\"GET\">\n    <input name=\"q\" value=\"" + defaultVal + "\" placeholder=\"search\">\n  </form>\n</div>";
+};
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+},{"../../jsx/context":5}],24:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -4051,7 +4067,7 @@ TestPlugin.meta = {
   displayName: "Gnome Test",
   description: "checks for the existence of the gnome css class" };
 
-},{"../../jsx/hooks":6,"../../jsx/plugin":10}],24:[function(require,module,exports){
+},{"../../jsx/hooks":6,"../../jsx/plugin":10}],25:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };

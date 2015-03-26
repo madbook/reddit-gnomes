@@ -243,6 +243,10 @@
   line-height: 20px;
   color: #808080;
 }
+.gnome-sr-subreddit-relation {
+  text-transform: uppercase;
+  font-weight: bold;
+}
 .gnome-sr-result-group {
   padding-left: 20px;
 }
