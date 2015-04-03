@@ -1,0 +1,61 @@
+.gnome-sticky-comments {
+  @sticky-color: #228822;
+  @sticky-background-color: lighten(@sticky-color, 60%);
+
+  .gnome-stickied-comment-container {
+    &.collapsed {
+      .gnome-stickied-comment > .thing > .child {
+        display: none;
+      }
+
+      .gnome-stickied-expando {
+        display: block;
+      }
+    }
+
+    padding: 10px;
+    border: 0px solid @sticky-color;
+    border-bottom-width: 1px;
+    margin-bottom: 5px;
+  }
+
+  .gnome-stickied-comment > .thing {
+    margin-left: 0;
+
+    > .entry {
+      .usertext-body {
+        background: transparent !important;
+      }
+
+      .tagline,
+      .author {
+        color: @sticky-color;
+      }
+      
+      .tagline:after {
+        display: inline-block;
+        content: " - stickied comment";
+      }
+    }
+  }
+
+  .gnome-stickied-expando {
+    margin-left: 35px;
+    font-size: 13px;
+    color: grey;
+    cursor: pointer;
+    display: none;
+  }
+
+  .gnome-stickied-comment-ghost {
+    padding: 5px 10px;
+    margin-left: 15px;
+    border: 1px solid @sticky-color;
+    color: @sticky-color;
+    font-size: 14px;
+    line-height: 20px;
+    border-radius: 2px;
+    background: @sticky-background-color;
+    display: inline-block;
+  }
+}

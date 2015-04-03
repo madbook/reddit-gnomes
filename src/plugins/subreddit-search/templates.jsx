@@ -1,6 +1,33 @@
 
 import context from '../../jsx/context';
 
+let {floor} = Math;
+let {now} = Date;
+
+let times = new Map([
+  ['year', 31536000],
+  ['month', 2592000],
+  ['week', 604800],
+  ['day', 86400],
+  ['hour', 3600],
+  ['minute', 60],
+]);
+
+function getRelativeDate(createdDate, label='ago', fallback='just now') {
+  let currentDate = floor(now() / 1000);
+  let seconds = currentDate - createdDate;
+  
+  for (let [name, value] of times) {
+    let time = floor(seconds / value);
+    if (time) {
+      let s = time > 1 ? 's' : '';
+      return `${name} ${value}${s} ${label}`;
+    }
+  }
+
+  return fallback;
+}
+
 const isSubreddit = (result) => result.kind === 't5';
 
 const isPost = (result) => result.kind === 't3';

@@ -159,6 +159,51 @@
   line-height: 15px;
 }
 
+.gnome-sticky-comments .gnome-stickied-comment-container {
+  padding: 10px;
+  border: 0px solid #228822;
+  border-bottom-width: 1px;
+  margin-bottom: 5px;
+}
+.gnome-sticky-comments .gnome-stickied-comment-container.collapsed .gnome-stickied-comment > .thing > .child {
+  display: none;
+}
+.gnome-sticky-comments .gnome-stickied-comment-container.collapsed .gnome-stickied-expando {
+  display: block;
+}
+.gnome-sticky-comments .gnome-stickied-comment > .thing {
+  margin-left: 0;
+}
+.gnome-sticky-comments .gnome-stickied-comment > .thing > .entry .usertext-body {
+  background: transparent !important;
+}
+.gnome-sticky-comments .gnome-stickied-comment > .thing > .entry .tagline,
+.gnome-sticky-comments .gnome-stickied-comment > .thing > .entry .author {
+  color: #228822;
+}
+.gnome-sticky-comments .gnome-stickied-comment > .thing > .entry .tagline:after {
+  display: inline-block;
+  content: " - stickied comment";
+}
+.gnome-sticky-comments .gnome-stickied-expando {
+  margin-left: 35px;
+  font-size: 13px;
+  color: grey;
+  cursor: pointer;
+  display: none;
+}
+.gnome-sticky-comments .gnome-stickied-comment-ghost {
+  padding: 5px 10px;
+  margin-left: 15px;
+  border: 1px solid #228822;
+  color: #228822;
+  font-size: 14px;
+  line-height: 20px;
+  border-radius: 2px;
+  background: #e4f8e4;
+  display: inline-block;
+}
+
 .gnome-subreddit-search body > .content {
   margin: 0;
 }

@@ -2678,6 +2678,10 @@ var readnext = _interopRequire(require("../plugins/readnext/plugin"));
 
 plugins.push(readnext);
 
+var stickycomments = _interopRequire(require("../plugins/sticky-comments/plugin"));
+
+plugins.push(stickycomments);
+
 var subredditsearch = _interopRequire(require("../plugins/subreddit-search/plugin"));
 
 plugins.push(subredditsearch);
@@ -2692,7 +2696,7 @@ plugins.push(topcomment);
 
 module.exports = plugins;
 
-},{"../plugins/juicy-votes/plugin":15,"../plugins/live-comments/plugin":17,"../plugins/prefs/plugin":18,"../plugins/readnext/plugin":20,"../plugins/subreddit-search/plugin":22,"../plugins/test/plugin":24,"../plugins/top-comment/plugin":25}],10:[function(require,module,exports){
+},{"../plugins/juicy-votes/plugin":15,"../plugins/live-comments/plugin":17,"../plugins/prefs/plugin":18,"../plugins/readnext/plugin":20,"../plugins/sticky-comments/plugin":22,"../plugins/subreddit-search/plugin":23,"../plugins/test/plugin":25,"../plugins/top-comment/plugin":26}],10:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -3729,6 +3733,94 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
 
+var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var context = _interopRequire(require("../../jsx/context"));
+
+var Plugin = _interopRequire(require("../../jsx/plugin"));
+
+var ghostTemplate = "<div class=\"gnome-stickied-comment-ghost\">\n  <p>This comment has been stickied above.</p>\n</div>";
+
+var stickyTemplate = "<div class=\"gnome-stickied-comment-container collapsed\">\n  <div class=\"gnome-stickied-comment\"></div>\n  <div class=\"gnome-stickied-expando\"></div>\n</div>";
+
+var StickyCommentsPlugin = (function (Plugin) {
+  function StickyCommentsPlugin() {
+    _classCallCheck(this, StickyCommentsPlugin);
+
+    if (Plugin != null) {
+      Plugin.apply(this, arguments);
+    }
+  }
+
+  _inherits(StickyCommentsPlugin, Plugin);
+
+  _prototypeProperties(StickyCommentsPlugin, null, {
+    shouldRun: {
+      value: function shouldRun() {
+        return _get(Object.getPrototypeOf(StickyCommentsPlugin.prototype), "shouldRun", this).call(this) && context.page === "comments";
+      },
+      writable: true,
+      configurable: true
+    },
+    run: {
+      value: function run() {
+        var distinguishements = ["admin", "moderator"];
+        var cssQuery = distinguishements.map(function (name) {
+          return ".userattrs ." + name;
+        }).join(",");
+        var $commentArea = $(".commentarea");
+        var $theComment = $commentArea.find(cssQuery).closest(".thing").eq(0);
+
+        if (!$theComment.length) {
+          return;
+        }
+
+        var $siteTable = $commentArea.children(".sitetable");
+        var $stickyContainer = $($.parseHTML(stickyTemplate));
+        var $stickyComment = $stickyContainer.find(".gnome-stickied-comment");
+        var $stickyGhost = $($.parseHTML(ghostTemplate));
+        var $replies = $theComment.find("> .child > .sitetable > .thing");
+        var numReplies = $replies.length;
+
+        if (numReplies) {
+          var $stickyExpando = $stickyContainer.find(".gnome-stickied-expando");
+          $stickyExpando.text("[+] " + numReplies + " replies");
+          $stickyExpando.on("click", function (e) {
+            return $stickyContainer.removeClass("collapsed");
+          });
+        } else {
+          $stickyContainer.removeClass("collapsed");
+        }
+
+        $theComment.before($stickyGhost);
+        $stickyComment.append($theComment);
+        $siteTable.before($stickyContainer);
+      },
+      writable: true,
+      configurable: true
+    }
+  });
+
+  return StickyCommentsPlugin;
+})(Plugin);
+
+module.exports = StickyCommentsPlugin;
+
+StickyCommentsPlugin.meta = {
+  displayName: "Gnome-Child's Sticky Comment",
+  description: "seaches for a distinguished comment on a page and makes it sticky." };
+
+},{"../../jsx/context":5,"../../jsx/plugin":10}],23:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
@@ -3849,12 +3941,42 @@ SubredditSearch.meta = {
   displayName: "Subreddit Search",
   description: "mockup of subreddits in search results" };
 
-},{"../../jsx/context":5,"../../jsx/plugin":10,"./templates":23}],23:[function(require,module,exports){
+},{"../../jsx/context":5,"../../jsx/plugin":10,"./templates":24}],24:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+var _slicedToArray = function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { var _arr = []; for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) { _arr.push(_step.value); if (i && _arr.length === i) break; } return _arr; } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } };
+
 var context = _interopRequire(require("../../jsx/context"));
+
+var floor = Math.floor;
+var now = Date.now;
+
+var times = new Map([["year", 31536000], ["month", 2592000], ["week", 604800], ["day", 86400], ["hour", 3600], ["minute", 60]]);
+
+function getRelativeDate(createdDate) {
+  var label = arguments[1] === undefined ? "ago" : arguments[1];
+  var fallback = arguments[2] === undefined ? "just now" : arguments[2];
+
+  var currentDate = floor(now() / 1000);
+  var seconds = currentDate - createdDate;
+
+  for (var _iterator = times[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
+    var _step$value = _slicedToArray(_step.value, 2);
+
+    var _name = _step$value[0];
+    var value = _step$value[1];
+
+    var time = floor(seconds / value);
+    if (time) {
+      var s = time > 1 ? "s" : "";
+      return "" + _name + " " + value + "" + s + " " + label;
+    }
+  }
+
+  return fallback;
+}
 
 var isSubreddit = function (result) {
   return result.kind === "t5";
@@ -3995,7 +4117,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-},{"../../jsx/context":5}],24:[function(require,module,exports){
+},{"../../jsx/context":5}],25:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -4067,7 +4189,7 @@ TestPlugin.meta = {
   displayName: "Gnome Test",
   description: "checks for the existence of the gnome css class" };
 
-},{"../../jsx/hooks":6,"../../jsx/plugin":10}],25:[function(require,module,exports){
+},{"../../jsx/hooks":6,"../../jsx/plugin":10}],26:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
