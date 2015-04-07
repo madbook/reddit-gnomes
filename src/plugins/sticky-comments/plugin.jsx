@@ -18,16 +18,16 @@ export default class StickyCommentsPlugin extends Plugin {
   }
 
   run() {
-    let distinguishements = ['admin', 'moderator'];
+    let distinguishements = ['moderator', 'admin'];
     let cssQuery = distinguishements.map(name => `.userattrs .${name}`).join(',');
     let $commentArea = $('.commentarea');
-    let $theComment = $commentArea.find(cssQuery).closest('.thing').eq(0);
+    let $siteTable = $commentArea.children('.sitetable');
+    let $theComment = $siteTable.children('.thing').find(cssQuery).closest('.thing').eq(0);
 
     if (!$theComment.length) {
       return;
     }
 
-    let $siteTable = $commentArea.children('.sitetable');
     let $stickyContainer = $($.parseHTML(stickyTemplate));
     let $stickyComment = $stickyContainer.find('.gnome-stickied-comment');
     let $stickyGhost = $($.parseHTML(ghostTemplate));

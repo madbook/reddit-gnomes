@@ -3768,18 +3768,18 @@ var StickyCommentsPlugin = (function (Plugin) {
     },
     run: {
       value: function run() {
-        var distinguishements = ["admin", "moderator"];
+        var distinguishements = ["moderator", "admin"];
         var cssQuery = distinguishements.map(function (name) {
           return ".userattrs ." + name;
         }).join(",");
         var $commentArea = $(".commentarea");
-        var $theComment = $commentArea.find(cssQuery).closest(".thing").eq(0);
+        var $siteTable = $commentArea.children(".sitetable");
+        var $theComment = $siteTable.children(".thing").find(cssQuery).closest(".thing").eq(0);
 
         if (!$theComment.length) {
           return;
         }
 
-        var $siteTable = $commentArea.children(".sitetable");
         var $stickyContainer = $($.parseHTML(stickyTemplate));
         var $stickyComment = $stickyContainer.find(".gnome-stickied-comment");
         var $stickyGhost = $($.parseHTML(ghostTemplate));

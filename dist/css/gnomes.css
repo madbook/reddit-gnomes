@@ -194,7 +194,7 @@
 }
 .gnome-sticky-comments .gnome-stickied-comment-ghost {
   padding: 5px 10px;
-  margin-left: 15px;
+  margin: 5px 0 10px 35px;
   border: 1px solid #228822;
   color: #228822;
   font-size: 14px;

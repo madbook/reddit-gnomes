@@ -14,7 +14,7 @@
       ],
       "js": [
         "bower_components/jquery/dist/jquery.min.js",
-        "bower_components/react/react-with-addons.min.js",
+        "bower_components/react/react-with-addons.js",
         "js/gnomes.js"
       ]
     }
