@@ -8,12 +8,12 @@ if (global._babelPolyfill) {
 global._babelPolyfill = true;
 
 require("core-js/shim");
-require("regenerator-babel/runtime");
 
+require("regenerator-babel/runtime");
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"core-js/shim":2,"regenerator-babel/runtime":3}],2:[function(require,module,exports){
 /**
- * Core.js 0.5.4
+ * Core.js 0.6.1
  * https://github.com/zloirock/core-js
  * License: http://rock.mit-license.org
  * © 2015 Denis Pushkarev
@@ -79,16 +79,12 @@ var OBJECT          = 'Object'
   , html            = document && document.documentElement
   , navigator       = global.navigator
   , define          = global.define
+  , console         = global.console || {}
   , ArrayProto      = Array[PROTOTYPE]
   , ObjectProto     = Object[PROTOTYPE]
   , FunctionProto   = Function[PROTOTYPE]
   , Infinity        = 1 / 0
-  , DOT             = '.'
-  // Methods from https://github.com/DeveloperToolsWG/console-object/blob/master/api.md
-  , CONSOLE_METHODS = 'assert,clear,count,debug,dir,dirxml,error,exception,' +
-      'group,groupCollapsed,groupEnd,info,isIndependentlyComposed,log,' +
-      'markTimeline,profile,profileEnd,table,time,timeEnd,timeline,' +
-      'timelineEnd,timeStamp,trace,warn';
+  , DOT             = '.';
 
 // http://jsperf.com/core-js-isobject
 function isObject(it){
@@ -175,12 +171,6 @@ function invoke(fn, args, that){
     case 5: return un ? fn(args[0], args[1], args[2], args[3], args[4])
                       : fn.call(that, args[0], args[1], args[2], args[3], args[4]);
   } return              fn.apply(that, args);
-}
-function construct(target, argumentsList /*, newTarget*/){
-  var proto    = assertFunction(arguments.length < 3 ? target : arguments[2])[PROTOTYPE]
-    , instance = create(isObject(proto) ? proto : ObjectProto)
-    , result   = apply.call(target, instance, argumentsList);
-  return isObject(result) ? result : instance;
 }
 
 // Object:
@@ -423,32 +413,97 @@ function assignHidden(target, src){
 
 var SYMBOL_UNSCOPABLES = getWellKnownSymbol('unscopables')
   , ArrayUnscopables   = ArrayProto[SYMBOL_UNSCOPABLES] || {}
-  , SYMBOL_SPECIES     = getWellKnownSymbol('species');
+  , SYMBOL_TAG         = getWellKnownSymbol(TO_STRING_TAG)
+  , SYMBOL_SPECIES     = getWellKnownSymbol('species')
+  , SYMBOL_ITERATOR;
 function setSpecies(C){
-  if(framework || !isNative(C))defineProperty(C, SYMBOL_SPECIES, {
+  if(DESC && (framework || !isNative(C)))defineProperty(C, SYMBOL_SPECIES, {
     configurable: true,
     get: returnThis
   });
 }
 
-// Iterators
-var SYMBOL_ITERATOR = getWellKnownSymbol(ITERATOR)
-  , SYMBOL_TAG      = getWellKnownSymbol(TO_STRING_TAG)
-  , SUPPORT_FF_ITER = FF_ITERATOR in ArrayProto
-  , ITER  = safeSymbol('iter')
+/******************************************************************************
+ * Module : common.export                                                     *
+ ******************************************************************************/
+
+var NODE = cof(process) == PROCESS
+  , core = {}
+  , path = framework ? global : core
+  , old  = global.core
+  , exportGlobal
+  // type bitmap
+  , FORCED = 1
+  , GLOBAL = 2
+  , STATIC = 4
+  , PROTO  = 8
+  , BIND   = 16
+  , WRAP   = 32;
+function $define(type, name, source){
+  var key, own, out, exp
+    , isGlobal = type & GLOBAL
+    , target   = isGlobal ? global : (type & STATIC)
+        ? global[name] : (global[name] || ObjectProto)[PROTOTYPE]
+    , exports  = isGlobal ? core : core[name] || (core[name] = {});
+  if(isGlobal)source = name;
+  for(key in source){
+    // there is a similar native
+    own = !(type & FORCED) && target && key in target
+      && (!isFunction(target[key]) || isNative(target[key]));
+    // export native or passed
+    out = (own ? target : source)[key];
+    // prevent global pollution for namespaces
+    if(!framework && isGlobal && !isFunction(target[key]))exp = source[key];
+    // bind timers to global for call from export context
+    else if(type & BIND && own)exp = ctx(out, global);
+    // wrap global constructors for prevent change them in library
+    else if(type & WRAP && !framework && target[key] == out){
+      exp = function(param){
+        return this instanceof out ? new out(param) : out(param);
+      }
+      exp[PROTOTYPE] = out[PROTOTYPE];
+    } else exp = type & PROTO && isFunction(out) ? ctx(call, out) : out;
+    // extend global
+    if(framework && target && !own){
+      if(isGlobal)target[key] = out;
+      else delete target[key] && hidden(target, key, out);
+    }
+    // export
+    if(exports[key] != out)hidden(exports, key, exp);
+  }
+}
+// CommonJS export
+if(typeof module != 'undefined' && module.exports)module.exports = core;
+// RequireJS export
+else if(isFunction(define) && define.amd)define(function(){return core});
+// Export to global object
+else exportGlobal = true;
+if(exportGlobal || framework){
+  core.noConflict = function(){
+    global.core = old;
+    return core;
+  }
+  global.core = core;
+}
+
+/******************************************************************************
+ * Module : common.iterators                                                  *
+ ******************************************************************************/
+
+SYMBOL_ITERATOR = getWellKnownSymbol(ITERATOR);
+var ITER  = safeSymbol('iter')
   , KEY   = 1
   , VALUE = 2
   , Iterators = {}
   , IteratorPrototype = {}
-  , NATIVE_ITERATORS = SYMBOL_ITERATOR in ArrayProto
-    // Safari define byggy iterators w/o `next`
+    // Safari has byggy iterators w/o `next`
   , BUGGY_ITERATORS = 'keys' in ArrayProto && !('next' in [].keys());
 // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
 setIterator(IteratorPrototype, returnThis);
 function setIterator(O, value){
   hidden(O, SYMBOL_ITERATOR, value);
   // Add iterator for FF iterator protocol
-  SUPPORT_FF_ITER && hidden(O, FF_ITERATOR, value);
+  FF_ITERATOR in ArrayProto && hidden(O, FF_ITERATOR, value);
 }
 function createIterator(Constructor, NAME, next, proto){
   Constructor[PROTOTYPE] = create(proto || IteratorPrototype, {next: descriptor(1, next)});
@@ -511,72 +566,38 @@ function getIterator(it){
 function stepCall(fn, value, entries){
   return entries ? invoke(fn, value) : fn(value);
 }
+function checkDangerIterClosing(fn){
+  var danger = true;
+  var O = {
+    next: function(){ throw 1 },
+    'return': function(){ danger = false }
+  };
+  O[SYMBOL_ITERATOR] = returnThis;
+  try {
+    fn(O);
+  } catch(e){}
+  return danger;
+}
+function closeIterator(iterator){
+  var ret = iterator['return'];
+  if(ret !== undefined)ret.call(iterator);
+}
+function safeIterClose(exec, iterator){
+  try {
+    exec(iterator);
+  } catch(e){
+    closeIterator(iterator);
+    throw e;
+  }
+}
 function forOf(iterable, entries, fn, that){
-  var iterator = getIterator(iterable)
-    , f        = ctx(fn, that, entries ? 2 : 1)
-    , step;
-  while(!(step = iterator.next()).done)if(stepCall(f, step.value, entries) === false)return;
-}
-
-// core
-var NODE = cof(process) == PROCESS
-  , core = {}
-  , path = framework ? global : core
-  , old  = global.core
-  , exportGlobal
-  // type bitmap
-  , FORCED = 1
-  , GLOBAL = 2
-  , STATIC = 4
-  , PROTO  = 8
-  , BIND   = 16
-  , WRAP   = 32
-  , SIMPLE = 64;
-function $define(type, name, source){
-  var key, own, out, exp
-    , isGlobal = type & GLOBAL
-    , target   = isGlobal ? global : (type & STATIC)
-        ? global[name] : (global[name] || ObjectProto)[PROTOTYPE]
-    , exports  = isGlobal ? core : core[name] || (core[name] = {});
-  if(isGlobal)source = name;
-  for(key in source){
-    // there is a similar native
-    own = !(type & FORCED) && target && key in target
-      && (!isFunction(target[key]) || isNative(target[key]));
-    // export native or passed
-    out = (own ? target : source)[key];
-    // prevent global pollution for namespaces
-    if(!framework && isGlobal && !isFunction(target[key]))exp = source[key];
-    // bind timers to global for call from export context
-    else if(type & BIND && own)exp = ctx(out, global);
-    // wrap global constructors for prevent change them in library
-    else if(type & WRAP && !framework && target[key] == out){
-      exp = function(param){
-        return this instanceof out ? new out(param) : out(param);
-      }
-      exp[PROTOTYPE] = out[PROTOTYPE];
-    } else exp = type & PROTO && isFunction(out) ? ctx(call, out) : out;
-    // extend global
-    if(framework && target && !own){
-      if(isGlobal || type & SIMPLE)target[key] = out;
-      else delete target[key] && hidden(target, key, out);
+  safeIterClose(function(iterator){
+    var f = ctx(fn, that, entries ? 2 : 1)
+      , step;
+    while(!(step = iterator.next()).done)if(stepCall(f, step.value, entries) === false){
+      return closeIterator(iterator);
     }
-    // export
-    if(exports[key] != out)hidden(exports, key, exp);
-  }
-}
-// CommonJS export
-if(typeof module != 'undefined' && module.exports)module.exports = core;
-// RequireJS export
-else if(isFunction(define) && define.amd)define(function(){return core});
-// Export to global object
-else exportGlobal = true;
-if(exportGlobal || framework){
-  core.noConflict = function(){
-    global.core = old;
-    return core;
-  }
-  global.core = core;
+  }, getIterator(iterable));
 }
 
 /******************************************************************************
@@ -614,7 +635,7 @@ if(exportGlobal || framework){
         : SymbolRegistry[key] = Symbol(key);
     },
     // 19.4.2.4 Symbol.iterator
-    iterator: SYMBOL_ITERATOR,
+    iterator: SYMBOL_ITERATOR || getWellKnownSymbol(ITERATOR),
     // 19.4.2.5 Symbol.keyFor(sym)
     keyFor: part.call(keyOf, SymbolRegistry),
     // 19.4.2.10 Symbol.species
@@ -658,13 +679,18 @@ if(exportGlobal || framework){
       return result;
     }
   });
+  
+  // 20.2.1.9 Math[@@toStringTag]
+  setToStringTag(Math, MATH, true);
+  // 24.3.3 JSON[@@toStringTag]
+  setToStringTag(global.JSON, 'JSON', true);
 }(safeSymbol('tag'), {}, {}, true);
 
 /******************************************************************************
- * Module : es6.object                                                        *
+ * Module : es6.object.statics                                                *
  ******************************************************************************/
 
-!function(tmp){
+!function(){
   var objectStatic = {
     // 19.1.3.1 Object.assign(target, source)
     assign: assign,
@@ -689,19 +715,18 @@ if(exportGlobal || framework){
     }
   }();
   $define(STATIC, OBJECT, objectStatic);
-  
-  if(framework){
-    // 19.1.3.6 Object.prototype.toString()
-    tmp[SYMBOL_TAG] = DOT;
-    if(cof(tmp) != DOT)hidden(ObjectProto, TO_STRING, function(){
-      return '[object ' + classof(this) + ']';
-    });
-  }
-  
-  // 20.2.1.9 Math[@@toStringTag]
-  setToStringTag(Math, MATH, true);
-  // 24.3.3 JSON[@@toStringTag]
-  setToStringTag(global.JSON, 'JSON', true);
+}();
+
+/******************************************************************************
+ * Module : es6.object.prototype                                              *
+ ******************************************************************************/
+
+!function(tmp){
+  // 19.1.3.6 Object.prototype.toString()
+  tmp[SYMBOL_TAG] = DOT;
+  if(cof(tmp) != DOT)hidden(ObjectProto, TO_STRING, function(){
+    return '[object ' + classof(this) + ']';
+  });
 }({});
 
 /******************************************************************************
@@ -750,7 +775,7 @@ if(exportGlobal || framework){
 
 !function(NAME){
   // 19.2.4.2 name
-  NAME in FunctionProto || defineProperty(FunctionProto, NAME, {
+  NAME in FunctionProto || (DESC && defineProperty(FunctionProto, NAME, {
     configurable: true,
     get: function(){
       var match = String(this).match(/^\s*function ([^ (]*)/)
@@ -761,7 +786,7 @@ if(exportGlobal || framework){
     set: function(value){
       has(this, NAME) || defineProperty(this, NAME, descriptor(0, value));
     }
-  });
+  }));
 }('name');
 
 /******************************************************************************
@@ -798,7 +823,7 @@ Number('0o1') && Number('0b1') || function(_Number, NumberProto){
 }(Number, Number[PROTOTYPE]);
 
 /******************************************************************************
- * Module : es6.number                                                        *
+ * Module : es6.number.statics                                                *
  ******************************************************************************/
 
 !function(isInteger){
@@ -1018,11 +1043,11 @@ Number('0o1') && Number('0b1') || function(_Number, NumberProto){
 }(String.fromCharCode);
 
 /******************************************************************************
- * Module : es6.array                                                         *
+ * Module : es6.array.statics                                                 *
  ******************************************************************************/
 
 !function(){
-  $define(STATIC, ARRAY, {
+  $define(STATIC + FORCED * checkDangerIterClosing(Array.from), ARRAY, {
     // 22.1.2.1 Array.from(arrayLike, mapfn = undefined, thisArg = undefined)
     from: function(arrayLike/*, mapfn = undefined, thisArg = undefined*/){
       var O       = Object(assertDefined(arrayLike))
@@ -1030,15 +1055,26 @@ Number('0o1') && Number('0b1') || function(_Number, NumberProto){
         , mapping = mapfn !== undefined
         , f       = mapping ? ctx(mapfn, arguments[2], 2) : undefined
         , index   = 0
-        , length, result, iter, step;
-      if(isIterable(O))for(iter = getIterator(O), result = new (generic(this, Array)); !(step = iter.next()).done; index++){
-        result[index] = mapping ? f(step.value, index) : step.value;
-      } else for(result = new (generic(this, Array))(length = toLength(O.length)); length > index; index++){
-        result[index] = mapping ? f(O[index], index) : O[index];
+        , length, result, step;
+      if(isIterable(O)){
+        result = new (generic(this, Array));
+        safeIterClose(function(iterator){
+          for(; !(step = iterator.next()).done; index++){
+            result[index] = mapping ? f(step.value, index) : step.value;
+          }
+        }, getIterator(O));
+      } else {
+        result = new (generic(this, Array))(length = toLength(O.length));
+        for(; length > index; index++){
+          result[index] = mapping ? f(O[index], index) : O[index];
+        }
       }
       result.length = index;
       return result;
-    },
+    }
+  });
+  
+  $define(STATIC, ARRAY, {
     // 22.1.2.3 Array.of( ...items)
     of: function(/* ...args */){
       var index  = 0
@@ -1050,6 +1086,14 @@ Number('0o1') && Number('0b1') || function(_Number, NumberProto){
     }
   });
   
+  setSpecies(Array);
+}();
+
+/******************************************************************************
+ * Module : es6.array.prototype                                               *
+ ******************************************************************************/
+
+!function(){
   $define(PROTO, ARRAY, {
     // 22.1.3.3 Array.prototype.copyWithin(target, start, end = this.length)
     copyWithin: function(target /* = 0 */, start /* = 0, end = @length */){
@@ -1095,9 +1139,7 @@ Number('0o1') && Number('0b1') || function(_Number, NumberProto){
       ArrayUnscopables[it] = true;
     });
     SYMBOL_UNSCOPABLES in ArrayProto || hidden(ArrayProto, SYMBOL_UNSCOPABLES, ArrayUnscopables);
-  }  
-  
-  setSpecies(Array);
+  }
 }();
 
 /******************************************************************************
@@ -1149,16 +1191,9 @@ Number('0o1') && Number('0b1') || function(_Number, NumberProto){
  * Module : es6.regexp                                                        *
  ******************************************************************************/
 
-!function(RegExpProto, _RegExp){
-  function assertRegExpWrapper(fn){
-    return function(){
-      assert(cof(this) === REGEXP);
-      return fn(this);
-    }
-  }
-  
+DESC && !function(RegExpProto, _RegExp){  
   // RegExp allows a regex with flags as the pattern
-  if(DESC && !function(){try{return RegExp(/a/g, 'i') == '/a/i'}catch(e){}}()){
+  if(!function(){try{return RegExp(/a/g, 'i') == '/a/i'}catch(e){}}()){
     RegExp = function RegExp(pattern, flags){
       return new _RegExp(cof(pattern) == REGEXP && flags !== undefined
         ? pattern.source : pattern, flags);
@@ -1178,18 +1213,7 @@ Number('0o1') && Number('0b1') || function(_Number, NumberProto){
   // 21.2.5.3 get RegExp.prototype.flags()
   if(/./g.flags != 'g')defineProperty(RegExpProto, 'flags', {
     configurable: true,
-    get: assertRegExpWrapper(createReplacer(/^.*\/(\w*)$/, '$1', true))
-  });
-  
-  // 21.2.5.12 get RegExp.prototype.sticky()
-  // 21.2.5.15 get RegExp.prototype.unicode()
-  forEach.call(array('sticky,unicode'), function(key){
-    key in /./ || defineProperty(RegExpProto, key, DESC ? {
-      configurable: true,
-      get: assertRegExpWrapper(function(){
-        return false;
-      })
-    } : descriptor(5, false));
+    get: createReplacer(/^.*\/(\w*)$/, '$1')
   });
   
   setSpecies(RegExp);
@@ -1277,30 +1301,55 @@ $define(GLOBAL + BIND, {
 !function(Promise, test){
   isFunction(Promise) && isFunction(Promise.resolve)
   && Promise.resolve(test = new Promise(function(){})) == test
-  || function(asap, DEF){
-    function isThenable(o){
+  || function(asap, RECORD){
+    function isThenable(it){
       var then;
-      if(isObject(o))then = o.then;
+      if(isObject(it))then = it.then;
       return isFunction(then) ? then : false;
     }
-    function notify(def){
-      var chain = def.chain;
-      chain.length && asap(function(){
-        var msg = def.msg
-          , ok  = def.state == 1
-          , i   = 0;
-        while(chain.length > i)!function(react){
+    function handledRejectionOrHasOnRejected(promise){
+      var record = promise[RECORD]
+        , chain  = record.c
+        , i      = 0
+        , react;
+      if(record.h)return true;
+      while(chain.length > i){
+        react = chain[i++];
+        if(react.fail || handledRejectionOrHasOnRejected(react.P))return true;
+      }
+    }
+    function notify(record, reject){
+      var chain = record.c;
+      if(reject || chain.length)asap(function(){
+        var promise = record.p
+          , value   = record.v
+          , ok      = record.s == 1
+          , i       = 0;
+        if(reject && !handledRejectionOrHasOnRejected(promise)){
+          setTimeout(function(){
+            if(!handledRejectionOrHasOnRejected(promise)){
+              if(NODE){
+                if(!process.emit('unhandledRejection', value, promise)){
+                  // default node.js behavior
+                }
+              } else if(isFunction(console.error)){
+                console.error('Unhandled promise rejection', value);
+              }
+            }
+          }, 1e3);
+        } else while(chain.length > i)!function(react){
           var cb = ok ? react.ok : react.fail
             , ret, then;
           try {
             if(cb){
-              ret = cb === true ? msg : cb(msg);
+              if(!ok)record.h = true;
+              ret = cb === true ? value : cb(value);
               if(ret === react.P){
                 react.rej(TypeError(PROMISE + '-chain cycle'));
               } else if(then = isThenable(ret)){
                 then.call(ret, react.res, react.rej);
               } else react.res(ret);
-            } else react.rej(msg);
+            } else react.rej(value);
           } catch(err){
             react.rej(err);
           }
@@ -1308,33 +1357,33 @@ $define(GLOBAL + BIND, {
         chain.length = 0;
       });
     }
-    function resolve(msg){
-      var def = this
+    function resolve(value){
+      var record = this
         , then, wrapper;
-      if(def.done)return;
-      def.done = true;
-      def = def.def || def; // unwrap
+      if(record.d)return;
+      record.d = true;
+      record = record.r || record; // unwrap
       try {
-        if(then = isThenable(msg)){
-          wrapper = {def: def, done: false}; // wrap
-          then.call(msg, ctx(resolve, wrapper, 1), ctx(reject, wrapper, 1));
+        if(then = isThenable(value)){
+          wrapper = {r: record, d: false}; // wrap
+          then.call(value, ctx(resolve, wrapper, 1), ctx(reject, wrapper, 1));
         } else {
-          def.msg = msg;
-          def.state = 1;
-          notify(def);
+          record.v = value;
+          record.s = 1;
+          notify(record);
         }
       } catch(err){
-        reject.call(wrapper || {def: def, done: false}, err); // wrap
+        reject.call(wrapper || {r: record, d: false}, err); // wrap
       }
     }
-    function reject(msg){
-      var def = this;
-      if(def.done)return;
-      def.done = true;
-      def = def.def || def; // unwrap
-      def.msg = msg;
-      def.state = 2;
-      notify(def);
+    function reject(value){
+      var record = this;
+      if(record.d)return;
+      record.d = true;
+      record = record.r || record; // unwrap
+      record.v = value;
+      record.s = 2;
+      notify(record, true);
     }
     function getConstructor(C){
       var S = assertObject(C)[SYMBOL_SPECIES];
@@ -1344,12 +1393,19 @@ $define(GLOBAL + BIND, {
     Promise = function(executor){
       assertFunction(executor);
       assertInstance(this, Promise, PROMISE);
-      var def = {chain: [], state: 0, done: false, msg: undefined};
-      hidden(this, DEF, def);
+      var record = {
+        p: this,      // promise
+        c: [],        // chain
+        s: 0,         // state
+        d: false,     // done
+        v: undefined, // value
+        h: false      // handled rejection
+      };
+      hidden(this, RECORD, record);
       try {
-        executor(ctx(resolve, def, 1), ctx(reject, def, 1));
+        executor(ctx(resolve, record, 1), ctx(reject, record, 1));
       } catch(err){
-        reject.call(def, err);
+        reject.call(record, err);
       }
     }
     assignHidden(Promise[PROTOTYPE], {
@@ -1362,9 +1418,9 @@ $define(GLOBAL + BIND, {
         } , P = react.P = new (S != undefined ? S : Promise)(function(resolve, reject){
           react.res = assertFunction(resolve);
           react.rej = assertFunction(reject);
-        }), def = this[DEF];
-        def.chain.push(react);
-        def.state && notify(def);
+        }), record = this[RECORD];
+        record.c.push(react);
+        record.s && notify(record);
         return P;
       },
       // 25.4.5.1 Promise.prototype.catch(onRejected)
@@ -1407,13 +1463,13 @@ $define(GLOBAL + BIND, {
       },
       // 25.4.4.6 Promise.resolve(x)
       resolve: function(x){
-        return isObject(x) && DEF in x && getPrototypeOf(x) === this[PROTOTYPE]
+        return isObject(x) && RECORD in x && getPrototypeOf(x) === this[PROTOTYPE]
           ? x : new (getConstructor(this))(function(resolve, reject){
             resolve(x);
           });
       }
     });
-  }(nextTick || setImmediate, safeSymbol('def'));
+  }(nextTick || setImmediate, safeSymbol('record'));
   setToStringTag(Promise, PROMISE);
   setSpecies(Promise);
   $define(GLOBAL + FORCED * !isNative(Promise), {Promise: Promise});
@@ -1468,7 +1524,7 @@ $define(GLOBAL + BIND, {
             initFromIterable(that, iterable);
           };
       assignHidden(assignHidden(C[PROTOTYPE], methods), commonMethods);
-      isWeak || defineProperty(C[PROTOTYPE], 'size', {get: function(){
+      isWeak || !DESC || defineProperty(C[PROTOTYPE], 'size', {get: function(){
         return assertDefined(this[SIZE]);
       }});
     } else {
@@ -1477,7 +1533,7 @@ $define(GLOBAL + BIND, {
         , chain  = inst[ADDER](isWeak ? {} : -0, 1)
         , buggyZero;
       // wrap to init collections from iterable
-      if(!NATIVE_ITERATORS || !C.length){
+      if(checkDangerIterClosing(function(O){ new C(O) })){
         C = function(iterable){
           assertInstance(this, C, NAME);
           return initFromIterable(new Native, iterable);
@@ -1777,7 +1833,12 @@ $define(GLOBAL + BIND, {
     // 26.1.1 Reflect.apply(target, thisArgument, argumentsList)
     apply: ctx(call, apply, 3),
     // 26.1.2 Reflect.construct(target, argumentsList [, newTarget])
-    construct: construct,
+    construct: function(target, argumentsList /*, newTarget*/){
+      var proto    = assertFunction(arguments.length < 3 ? target : arguments[2])[PROTOTYPE]
+        , instance = create(isObject(proto) ? proto : ObjectProto)
+        , result   = apply.call(target, instance, argumentsList);
+      return isObject(result) ? result : instance;
+    },
     // 26.1.3 Reflect.defineProperty(target, propertyKey, attributes)
     defineProperty: wrap(defineProperty),
     // 26.1.4 Reflect.deleteProperty(target, propertyKey)
@@ -1851,8 +1912,17 @@ $define(GLOBAL + BIND, {
     }
   }
   $define(STATIC, OBJECT, {
+    // https://gist.github.com/WebReflection/9353781
+    getOwnPropertyDescriptors: function(object){
+      var O      = toObject(object)
+        , result = {};
+      forEach.call(ownKeys(O), function(key){
+        defineProperty(result, key, descriptor(0, getOwnDescriptor(O, key)));
+      });
+      return result;
+    },
     // https://github.com/rwaldron/tc39-notes/blob/master/es6/2014-04/apr-9.md#51-objectentries-objectvalues
-    values: createObjectToArray(false),
+    values:  createObjectToArray(false),
     entries: createObjectToArray(true)
   });
   $define(STATIC, REGEXP, {
@@ -2363,27 +2433,33 @@ $define(GLOBAL + BIND, {
       }
     },
 
-    _findFinallyEntry: function(finallyLoc) {
+    abrupt: function(type, arg) {
       for (var i = this.tryEntries.length - 1; i >= 0; --i) {
         var entry = this.tryEntries[i];
         if (entry.tryLoc <= this.prev &&
-            hasOwn.call(entry, "finallyLoc") && (
-              entry.finallyLoc === finallyLoc ||
-              this.prev < entry.finallyLoc)) {
-          return entry;
+            hasOwn.call(entry, "finallyLoc") &&
+            this.prev < entry.finallyLoc) {
+          var finallyEntry = entry;
+          break;
         }
       }
-    },
 
-    abrupt: function(type, arg) {
-      var entry = this._findFinallyEntry();
-      var record = entry ? entry.completion : {};
+      if (finallyEntry &&
+          (type === "break" ||
+           type === "continue") &&
+          finallyEntry.tryLoc <= arg &&
+          arg < finallyEntry.finallyLoc) {
+        // Ignore the finally entry if control is not jumping to a
+        // location outside the try/catch block.
+        finallyEntry = null;
+      }
 
+      var record = finallyEntry ? finallyEntry.completion : {};
       record.type = type;
       record.arg = arg;
 
-      if (entry) {
-        this.next = entry.finallyLoc;
+      if (finallyEntry) {
+        this.next = finallyEntry.finallyLoc;
       } else {
         this.complete(record);
       }
@@ -2410,8 +2486,12 @@ $define(GLOBAL + BIND, {
     },
 
     finish: function(finallyLoc) {
-      var entry = this._findFinallyEntry(finallyLoc);
-      return this.complete(entry.completion, entry.afterLoc);
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.finallyLoc === finallyLoc) {
+          return this.complete(entry.completion, entry.afterLoc);
+        }
+      }
     },
 
     "catch": function(tryLoc) {
@@ -2466,7 +2546,7 @@ module.exports = new Location(location.pathname + location.search);
 },{"./location":7}],6:[function(require,module,exports){
 "use strict";
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
@@ -2487,20 +2567,16 @@ var Hook = (function () {
     this.handlers = new Set();
   }
 
-  _prototypeProperties(Hook, null, {
+  _createClass(Hook, {
     on: {
       value: function on(handler) {
         return this.handlers.add(handler);
-      },
-      writable: true,
-      configurable: true
+      }
     },
     off: {
       value: function off(handler) {
         return this.handlers["delete"](handler);
-      },
-      writable: true,
-      configurable: true
+      }
     },
     call: {
       value: function call() {
@@ -2508,14 +2584,31 @@ var Hook = (function () {
           args[_key] = arguments[_key];
         }
 
-        for (var _iterator = this.handlers[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
-          var handler = _step.value;
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
 
-          handler.apply(null, args);
+        try {
+          for (var _iterator = this.handlers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var handler = _step.value;
+
+            handler.apply(null, args);
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator["return"]) {
+              _iterator["return"]();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
         }
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -2530,7 +2623,7 @@ module.exports = {
 },{}],7:[function(require,module,exports){
 "use strict";
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
@@ -2597,13 +2690,11 @@ var Location = (function () {
     this.query = query;
   }
 
-  _prototypeProperties(Location, {
+  _createClass(Location, null, {
     parseURL: {
       value: function parseURL(url) {
         return new Location(url);
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -2662,6 +2753,10 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 var plugins = [];
 
+var betatoggle = _interopRequire(require("../plugins/beta-toggle/plugin"));
+
+plugins.push(betatoggle);
+
 var juicyvotes = _interopRequire(require("../plugins/juicy-votes/plugin"));
 
 plugins.push(juicyvotes);
@@ -2696,12 +2791,12 @@ plugins.push(topcomment);
 
 module.exports = plugins;
 
-},{"../plugins/juicy-votes/plugin":15,"../plugins/live-comments/plugin":17,"../plugins/prefs/plugin":18,"../plugins/readnext/plugin":20,"../plugins/sticky-comments/plugin":22,"../plugins/subreddit-search/plugin":23,"../plugins/test/plugin":25,"../plugins/top-comment/plugin":26}],10:[function(require,module,exports){
+},{"../plugins/beta-toggle/plugin":15,"../plugins/juicy-votes/plugin":17,"../plugins/live-comments/plugin":19,"../plugins/prefs/plugin":20,"../plugins/readnext/plugin":22,"../plugins/sticky-comments/plugin":24,"../plugins/subreddit-search/plugin":25,"../plugins/test/plugin":27,"../plugins/top-comment/plugin":28}],10:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
@@ -2711,7 +2806,7 @@ var store = _interopRequire(require("./store"));
 
 var StoreModel = _interopRequire(require("./store-model"));
 
-var Plugin = (function (StoreModel) {
+var Plugin = (function (_StoreModel) {
   function Plugin() {
     _classCallCheck(this, Plugin);
 
@@ -2735,28 +2830,18 @@ var Plugin = (function (StoreModel) {
     this.state = defaultState;
   }
 
-  _inherits(Plugin, StoreModel);
+  _inherits(Plugin, _StoreModel);
 
-  _prototypeProperties(Plugin, {
-    defaultState: {
-      get: function () {
-        return {
-          enabled: true };
-      },
-      configurable: true
-    }
-  }, {
+  _createClass(Plugin, {
     name: {
       get: function () {
         return this.constructor.name;
-      },
-      configurable: true
+      }
     },
     meta: {
       get: function () {
         return this.constructor.meta || {};
-      },
-      configurable: true
+      }
     },
     shouldRun: {
 
@@ -2764,27 +2849,26 @@ var Plugin = (function (StoreModel) {
 
       value: function shouldRun() {
         return this.state.enabled;
-      },
-      writable: true,
-      configurable: true
+      }
     },
     _commit: {
       value: function _commit() {
         store[this.name] = this.state;
         store._commit();
-      },
-      writable: true,
-      configurable: true
+      }
     },
     setup: {
-      value: function setup() {},
-      writable: true,
-      configurable: true
+      value: function setup() {}
     },
     run: {
-      value: function run() {},
-      writable: true,
-      configurable: true
+      value: function run() {}
+    }
+  }, {
+    defaultState: {
+      get: function () {
+        return {
+          enabled: true };
+      }
     }
   });
 
@@ -2800,6 +2884,10 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 exports.getPluginsList = getPluginsList;
 exports.getPlugins = getPlugins;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+"use strict";
 
 var pluginClasses = _interopRequire(require("./plugin-loader"));
 
@@ -2822,19 +2910,20 @@ pluginClasses.forEach(function (GnomePlugin) {
 
 function getPluginsList() {
   return plugins.list;
-};
+}
+
+;
 
 function getPlugins() {
   return plugins.map;
-};
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+}
+
+;
 
 },{"./plugin-loader":9}],12:[function(require,module,exports){
 "use strict";
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
@@ -2859,7 +2948,7 @@ var StoreModel = (function () {
     }
   }
 
-  _prototypeProperties(StoreModel, null, {
+  _createClass(StoreModel, {
     setState: {
       value: function setState(newState) {
         var willChange = false;
@@ -2875,9 +2964,7 @@ var StoreModel = (function () {
         if (willChange) {
           this._commit();
         }
-      },
-      writable: true,
-      configurable: true
+      }
     },
     set: {
       value: function set(key, val) {
@@ -2898,23 +2985,17 @@ var StoreModel = (function () {
           target[key] = val;
           this._commit();
         }
-      },
-      writable: true,
-      configurable: true
+      }
     },
     _commit: {
       value: function _commit() {
         localStorage[this.key] = JSON.stringify(this.state);
-      },
-      writable: true,
-      configurable: true
+      }
     },
     keys: {
       value: function keys() {
         return Object.keys(this.state);
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -2937,6 +3018,10 @@ module.exports = new StoreModel("reddit-gnomes");
 
 exports.unsafe = unsafe;
 exports.toCssClassName = toCssClassName;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+"use strict";
 
 var unsafeDiv = document.createElement("div");
 
@@ -2955,16 +3040,13 @@ function hyphenate(match, $1, $2) {
 function toCssClassName(name) {
   return name.replace(whitespaceRegex, "-").replace(camelCaseRegex, hyphenate).toLowerCase();
 }
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 
 },{}],15:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
@@ -2972,18 +3054,121 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
 
 var Plugin = _interopRequire(require("../../jsx/plugin"));
 
-var JuicyVotesPlugin = (function (Plugin) {
-  function JuicyVotesPlugin() {
-    _classCallCheck(this, JuicyVotesPlugin);
+var BetaToggle = _interopRequire(require("./views"));
 
-    if (Plugin != null) {
-      Plugin.apply(this, arguments);
+var BetaTogglePlugin = (function (_Plugin) {
+  function BetaTogglePlugin() {
+    _classCallCheck(this, BetaTogglePlugin);
+
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
     }
   }
 
-  _inherits(JuicyVotesPlugin, Plugin);
+  _inherits(BetaTogglePlugin, _Plugin);
 
-  _prototypeProperties(JuicyVotesPlugin, null, {
+  _createClass(BetaTogglePlugin, {
+    run: {
+      value: function run() {
+        var isBeta = document.location.hostname.startsWith("beta.");
+        var mountNode = $.parseHTML("<div class=\"reddit-beta-toggle-mount\"></div>")[0];
+        var $mountNode = $(mountNode);
+
+        React.render(React.createElement(BetaToggle, { isBeta: isBeta }), mountNode);
+
+        $("#sr-header-area .drop-choices").after(mountNode);
+      }
+    }
+  });
+
+  return BetaTogglePlugin;
+})(Plugin);
+
+module.exports = BetaTogglePlugin;
+
+BetaTogglePlugin.meta = {
+  displayName: "Beta Toggle Gnome",
+  description: "toggle on and off beta mode. meep." };
+
+},{"../../jsx/plugin":10,"./views":16}],16:[function(require,module,exports){
+"use strict";
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var BetaToggle = (function (_React$Component) {
+  function BetaToggle() {
+    _classCallCheck(this, BetaToggle);
+
+    if (_React$Component != null) {
+      _React$Component.apply(this, arguments);
+    }
+  }
+
+  _inherits(BetaToggle, _React$Component);
+
+  _createClass(BetaToggle, {
+    onChange: {
+      value: function onChange() {
+        var a = document.createElement("a");
+        a.href = document.location.href;
+        a.hostname = this.props.isBeta ? "www.reddit.com" : "beta.reddit.com";
+        document.location = a.href;
+      }
+    },
+    render: {
+      value: function render() {
+        var classSet = React.addons.classSet({
+          "beta-toggle": true,
+          active: this.props.isBeta });
+
+        return React.createElement(
+          "div",
+          { className: classSet },
+          React.createElement(
+            "label",
+            null,
+            "beta ",
+            React.createElement("input", { type: "checkbox", checked: this.props.isBeta, onChange: this.onChange.bind(this) })
+          )
+        );
+      }
+    }
+  });
+
+  return BetaToggle;
+})(React.Component);
+
+module.exports = BetaToggle;
+
+},{}],17:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var Plugin = _interopRequire(require("../../jsx/plugin"));
+
+var JuicyVotesPlugin = (function (_Plugin) {
+  function JuicyVotesPlugin() {
+    _classCallCheck(this, JuicyVotesPlugin);
+
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
+    }
+  }
+
+  _inherits(JuicyVotesPlugin, _Plugin);
+
+  _createClass(JuicyVotesPlugin, {
     run: {
       value: function run() {
         $(".arrow").on("click", function () {
@@ -2995,9 +3180,7 @@ var JuicyVotesPlugin = (function (Plugin) {
             $this.removeClass("reddit-prototype-juicy-ui-pulse");
           }
         });
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -3011,7 +3194,7 @@ JuicyVotesPlugin.meta = {
   description: "adds juicy animations to vote arrows. that's right. juicy.",
   cssClassName: "juicy-votes" };
 
-},{"../../jsx/plugin":10}],16:[function(require,module,exports){
+},{"../../jsx/plugin":10}],18:[function(require,module,exports){
 "use strict";
 
 module.exports = React.createClass({
@@ -3063,12 +3246,12 @@ module.exports = React.createClass({
   }
 });
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
@@ -3082,18 +3265,18 @@ var Location = _interopRequire(require("../../jsx/location"));
 
 var Comment = _interopRequire(require("./comment"));
 
-var LiveCommentsPlugin = (function (Plugin) {
+var LiveCommentsPlugin = (function (_Plugin) {
   function LiveCommentsPlugin() {
     _classCallCheck(this, LiveCommentsPlugin);
 
-    if (Plugin != null) {
-      Plugin.apply(this, arguments);
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
     }
   }
 
-  _inherits(LiveCommentsPlugin, Plugin);
+  _inherits(LiveCommentsPlugin, _Plugin);
 
-  _prototypeProperties(LiveCommentsPlugin, null, {
+  _createClass(LiveCommentsPlugin, {
     run: {
       value: function run() {
         $(function () {
@@ -3153,9 +3336,7 @@ var LiveCommentsPlugin = (function (Plugin) {
             };
           });
         });
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -3169,12 +3350,12 @@ LiveCommentsPlugin.meta = {
   description: "pulls comments into reddit live threads from related discussions",
   cssClassName: "live-comments" };
 
-},{"../../jsx/location":7,"../../jsx/plugin":10,"./comment":16}],18:[function(require,module,exports){
+},{"../../jsx/location":7,"../../jsx/plugin":10,"./comment":18}],20:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
@@ -3193,24 +3374,22 @@ var _views = require("./views");
 var GnomePrefs = _views.GnomePrefs;
 var preftableTemplate = _views.preftableTemplate;
 
-var PrefsPlugin = (function (Plugin) {
+var PrefsPlugin = (function (_Plugin) {
   function PrefsPlugin() {
     _classCallCheck(this, PrefsPlugin);
 
-    if (Plugin != null) {
-      Plugin.apply(this, arguments);
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
     }
   }
 
-  _inherits(PrefsPlugin, Plugin);
+  _inherits(PrefsPlugin, _Plugin);
 
-  _prototypeProperties(PrefsPlugin, null, {
+  _createClass(PrefsPlugin, {
     shouldRun: {
       value: function shouldRun() {
         return context.page === "prefs";
-      },
-      writable: true,
-      configurable: true
+      }
     },
     run: {
       value: function run() {
@@ -3225,9 +3404,7 @@ var PrefsPlugin = (function (Plugin) {
         $(".content form").eq(0).after(prefTable);
         React.render(React.createElement(GnomePrefs, { plugins: plugins,
           descriptor: descriptor }), mountNode);
-      },
-      writable: true,
-      configurable: true
+      }
     },
     buildDescriptor: {
       value: function buildDescriptor(plugins) {
@@ -3245,9 +3422,7 @@ var PrefsPlugin = (function (Plugin) {
         });
 
         return descriptor;
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -3260,16 +3435,21 @@ PrefsPlugin.meta = {
   displayName: "Gnome Preferences",
   description: "creates UI on the user preference page to enable and \ndisable plugins" };
 
-},{"../../jsx/context":5,"../../jsx/hooks":6,"../../jsx/plugin":10,"../../jsx/plugins":11,"./views":19}],19:[function(require,module,exports){
+},{"../../jsx/context":5,"../../jsx/hooks":6,"../../jsx/plugin":10,"../../jsx/plugins":11,"./views":21}],21:[function(require,module,exports){
 "use strict";
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+"use strict";
 
 var toCssClassName = require("../../jsx/utils").toCssClassName;
 
@@ -3286,7 +3466,7 @@ var GnomePrefInput = (function (_React$Component) {
 
   _inherits(GnomePrefInput, _React$Component);
 
-  _prototypeProperties(GnomePrefInput, null, {
+  _createClass(GnomePrefInput, {
     render: {
       value: function render() {
         var _props = this.props;
@@ -3313,9 +3493,7 @@ var GnomePrefInput = (function (_React$Component) {
             ")"
           )
         );
-      },
-      writable: true,
-      configurable: true
+      }
     },
     handleClick: {
       value: function handleClick() {
@@ -3326,9 +3504,7 @@ var GnomePrefInput = (function (_React$Component) {
 
         plugin.set(property, val);
         this.setState({ val: val });
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -3346,7 +3522,7 @@ var GnomePrefs = exports.GnomePrefs = (function (_React$Component2) {
 
   _inherits(GnomePrefs, _React$Component2);
 
-  _prototypeProperties(GnomePrefs, null, {
+  _createClass(GnomePrefs, {
     render: {
       value: function render() {
         var descriptor = this.props.descriptor;
@@ -3370,26 +3546,22 @@ var GnomePrefs = exports.GnomePrefs = (function (_React$Component2) {
           { className: "gnome-prefs-panel" },
           prefs
         );
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
   return GnomePrefs;
 })(React.Component);
 
-var preftableTemplate = exports.preftableTemplate = "<table class=\"preftable pretty-form gnome-prefs-table\">\n  <tr>\n    <th>gnome options</th>\n    <td class=\"prefright\">\n    </td>\n  </tr>\n</table>";
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+var preftableTemplate = "<table class=\"preftable pretty-form gnome-prefs-table\">\n  <tr>\n    <th>gnome options</th>\n    <td class=\"prefright\">\n    </td>\n  </tr>\n</table>";
+exports.preftableTemplate = preftableTemplate;
 
-},{"../../jsx/utils":14}],20:[function(require,module,exports){
+},{"../../jsx/utils":14}],22:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -3405,32 +3577,22 @@ var hooks = _interopRequire(require("../../jsx/hooks"));
 
 var ReadNext = _interopRequire(require("./views"));
 
-var ReadNextPlugin = (function (Plugin) {
+var ReadNextPlugin = (function (_Plugin) {
   function ReadNextPlugin() {
     _classCallCheck(this, ReadNextPlugin);
 
-    if (Plugin != null) {
-      Plugin.apply(this, arguments);
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
     }
   }
 
-  _inherits(ReadNextPlugin, Plugin);
+  _inherits(ReadNextPlugin, _Plugin);
 
-  _prototypeProperties(ReadNextPlugin, {
-    defaultState: {
-      get: function () {
-        return {
-          lockToBottom: false };
-      },
-      configurable: true
-    }
-  }, {
+  _createClass(ReadNextPlugin, {
     shouldRun: {
       value: function shouldRun() {
         return _get(Object.getPrototypeOf(ReadNextPlugin.prototype), "shouldRun", this).call(this) && context.page === "comments";
-      },
-      writable: true,
-      configurable: true
+      }
     },
     setup: {
       value: function setup() {
@@ -3442,9 +3604,7 @@ var ReadNextPlugin = (function (Plugin) {
             displayName: "Lock to Bottom",
             description: "lock the widget in the bottom corner instead of the top" });
         });
-      },
-      writable: true,
-      configurable: true
+      }
     },
     run: {
       value: function run() {
@@ -3490,9 +3650,14 @@ var ReadNextPlugin = (function (Plugin) {
             subreddit: subreddit,
             position: position }), mountNode);
         });
-      },
-      writable: true,
-      configurable: true
+      }
+    }
+  }, {
+    defaultState: {
+      get: function () {
+        return {
+          lockToBottom: false };
+      }
     }
   });
 
@@ -3505,18 +3670,23 @@ ReadNextPlugin.meta = {
   displayName: "Read Next Gnome",
   description: "adds a widget to the sidebar on comments page that suggests\nnext posts" };
 
-},{"../../jsx/context":5,"../../jsx/hooks":6,"../../jsx/plugin":10,"./views":21}],21:[function(require,module,exports){
+},{"../../jsx/context":5,"../../jsx/hooks":6,"../../jsx/plugin":10,"./views":23}],23:[function(require,module,exports){
 "use strict";
 
 var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+"use strict";
 
 var regexThumbnail = /^http/;
 
@@ -3531,15 +3701,7 @@ var Post = exports.Post = (function (_React$Component) {
 
   _inherits(Post, _React$Component);
 
-  _prototypeProperties(Post, {
-    defaultProps: {
-      get: function () {
-        return {
-          visible: false };
-      },
-      configurable: true
-    }
-  }, {
+  _createClass(Post, {
     render: {
       value: function render() {
         var classSet = React.addons.classSet({
@@ -3588,9 +3750,14 @@ var Post = exports.Post = (function (_React$Component) {
             title
           )
         );
-      },
-      writable: true,
-      configurable: true
+      }
+    }
+  }, {
+    defaultProps: {
+      get: function () {
+        return {
+          visible: false };
+      }
     }
   });
 
@@ -3612,15 +3779,7 @@ var ReadNext = (function (_React$Component2) {
 
   _inherits(ReadNext, _React$Component2);
 
-  _prototypeProperties(ReadNext, {
-    defaultProps: {
-      get: function () {
-        return {
-          posts: [] };
-      },
-      configurable: true
-    }
-  }, {
+  _createClass(ReadNext, {
     componentDidMount: {
       value: function componentDidMount() {
         var _this = this;
@@ -3633,9 +3792,7 @@ var ReadNext = (function (_React$Component2) {
           _this.setState({
             fixed: shouldComponentLock(node) });
         });
-      },
-      writable: true,
-      configurable: true
+      }
     },
     next: {
       value: function next() {
@@ -3644,9 +3801,7 @@ var ReadNext = (function (_React$Component2) {
 
         this.setState({
           index: (i + 1) % l });
-      },
-      writable: true,
-      configurable: true
+      }
     },
     prev: {
       value: function prev() {
@@ -3655,9 +3810,7 @@ var ReadNext = (function (_React$Component2) {
 
         this.setState({
           index: (i + l - 1) % l });
-      },
-      writable: true,
-      configurable: true
+      }
     },
     render: {
       value: function render() {
@@ -3712,9 +3865,14 @@ var ReadNext = (function (_React$Component2) {
             posts
           )
         );
-      },
-      writable: true,
-      configurable: true
+      }
+    }
+  }, {
+    defaultProps: {
+      get: function () {
+        return {
+          posts: [] };
+      }
     }
   });
 
@@ -3722,16 +3880,13 @@ var ReadNext = (function (_React$Component2) {
 })(React.Component);
 
 exports["default"] = ReadNext;
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -3747,24 +3902,22 @@ var ghostTemplate = "<div class=\"gnome-stickied-comment-ghost\">\n  <p>This com
 
 var stickyTemplate = "<div class=\"gnome-stickied-comment-container collapsed\">\n  <div class=\"gnome-stickied-comment\"></div>\n  <div class=\"gnome-stickied-expando\"></div>\n</div>";
 
-var StickyCommentsPlugin = (function (Plugin) {
+var StickyCommentsPlugin = (function (_Plugin) {
   function StickyCommentsPlugin() {
     _classCallCheck(this, StickyCommentsPlugin);
 
-    if (Plugin != null) {
-      Plugin.apply(this, arguments);
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
     }
   }
 
-  _inherits(StickyCommentsPlugin, Plugin);
+  _inherits(StickyCommentsPlugin, _Plugin);
 
-  _prototypeProperties(StickyCommentsPlugin, null, {
+  _createClass(StickyCommentsPlugin, {
     shouldRun: {
       value: function shouldRun() {
         return _get(Object.getPrototypeOf(StickyCommentsPlugin.prototype), "shouldRun", this).call(this) && context.page === "comments";
-      },
-      writable: true,
-      configurable: true
+      }
     },
     run: {
       value: function run() {
@@ -3799,9 +3952,7 @@ var StickyCommentsPlugin = (function (Plugin) {
         $theComment.before($stickyGhost);
         $stickyComment.append($theComment);
         $siteTable.before($stickyContainer);
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -3814,12 +3965,12 @@ StickyCommentsPlugin.meta = {
   displayName: "Gnome-Child's Sticky Comment",
   description: "seaches for a distinguished comment on a page and makes it sticky." };
 
-},{"../../jsx/context":5,"../../jsx/plugin":10}],23:[function(require,module,exports){
+},{"../../jsx/context":5,"../../jsx/plugin":10}],25:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
@@ -3835,24 +3986,22 @@ var renderResult = _templates.renderResult;
 var renderGroup = _templates.renderGroup;
 var renderSearchForm = _templates.renderSearchForm;
 
-var SubredditSearch = (function (Plugin) {
+var SubredditSearch = (function (_Plugin) {
   function SubredditSearch() {
     _classCallCheck(this, SubredditSearch);
 
-    if (Plugin != null) {
-      Plugin.apply(this, arguments);
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
     }
   }
 
-  _inherits(SubredditSearch, Plugin);
+  _inherits(SubredditSearch, _Plugin);
 
-  _prototypeProperties(SubredditSearch, null, {
+  _createClass(SubredditSearch, {
     shouldRun: {
       value: function shouldRun() {
         return context.page === "subreddit-search";
-      },
-      writable: true,
-      configurable: true
+      }
     },
     run: {
       value: function run() {
@@ -3926,9 +4075,7 @@ var SubredditSearch = (function (Plugin) {
         } else {
           $container.html("<div class=\"gnome-sr-page\">\n          " + renderSearchForm(searchQuery) + "\n        </div>");
         }
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
@@ -3941,12 +4088,16 @@ SubredditSearch.meta = {
   displayName: "Subreddit Search",
   description: "mockup of subreddits in search results" };
 
-},{"../../jsx/context":5,"../../jsx/plugin":10,"./templates":24}],24:[function(require,module,exports){
+},{"../../jsx/context":5,"../../jsx/plugin":10,"./templates":26}],26:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 var _slicedToArray = function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { var _arr = []; for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) { _arr.push(_step.value); if (i && _arr.length === i) break; } return _arr; } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } };
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 var context = _interopRequire(require("../../jsx/context"));
 
@@ -3962,16 +4113,35 @@ function getRelativeDate(createdDate) {
   var currentDate = floor(now() / 1000);
   var seconds = currentDate - createdDate;
 
-  for (var _iterator = times[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) {
-    var _step$value = _slicedToArray(_step.value, 2);
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
 
-    var _name = _step$value[0];
-    var value = _step$value[1];
+  try {
+    for (var _iterator = times[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var _step$value = _slicedToArray(_step.value, 2);
 
-    var time = floor(seconds / value);
-    if (time) {
-      var s = time > 1 ? "s" : "";
-      return "" + _name + " " + value + "" + s + " " + label;
+      var _name = _step$value[0];
+      var value = _step$value[1];
+
+      var time = floor(seconds / value);
+      if (time) {
+        var s = time > 1 ? "s" : "";
+        return "" + _name + " " + value + "" + s + " " + label;
+      }
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator["return"]) {
+        _iterator["return"]();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
     }
   }
 
@@ -4090,7 +4260,7 @@ var renderSubredditResult = function (result) {
   return "<!-- subreddit result type -->\n  <div class=\"gnome-sr-title-container\">\n    <a class=\"gnome-sr-title\" href=\"" + result.data.url + "\">\n       " + highlightQuery(result.data.title) + "</a>\n    <a class=\"gnome-sr-subtitle\" href=\"" + result.data.url + "\">\n       /r/" + highlightQuery(result.data.display_name) + "</a>\n  </div>\n  <div class=\"gnome-sr-meta\">\n    " + renderSubredditRelation(result) + "\n    " + result.data.subscribers + " subscribers,\n    a community for [some time].\n  </div>\n  " + renderSubredditDescription(result) + "\n  " + renderSubredditFilterLink(result);
 };
 
-var renderResult = exports.renderResult = function (result) {
+var renderResult = function (result) {
   var content = "";
 
   if (isSubreddit(result)) {
@@ -4106,23 +4276,23 @@ var renderResult = exports.renderResult = function (result) {
   return "<div class=\"" + getTemplateClasses(result) + "\">" + content + "</div>";
 };
 
-var renderGroup = exports.renderGroup = function (name, contents, moreLink) {
+exports.renderResult = renderResult;
+var renderGroup = function (name, contents, moreLink) {
   return "<div class=\"gnome-sr-result-group\">\n  <div class=\"gnome-sr-result-group-header\">\n    " + name + "\n  </div>\n  <div class=\"gnome-sr-result-group-contents\">\n    " + contents.join("\n") + "\n  </div>\n  <div class=\"gnome-sr-more-results-container\">\n    <a class=\"gnome-sr-more-results\" href=\"" + moreLink + "\">more " + name + " results »</a>\n  </div>\n</div>";
 };
 
-var renderSearchForm = exports.renderSearchForm = function (defaultVal) {
+exports.renderGroup = renderGroup;
+var renderSearchForm = function (defaultVal) {
   return "<div class=\"gnome-sr-search-form\">\n  <form action=\"/subreddit-search\" method=\"GET\">\n    <input name=\"q\" value=\"" + defaultVal + "\" placeholder=\"search\">\n  </form>\n</div>";
 };
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+exports.renderSearchForm = renderSearchForm;
 
-},{"../../jsx/context":5}],25:[function(require,module,exports){
+},{"../../jsx/context":5}],27:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
@@ -4136,26 +4306,18 @@ var template = function (classFound) {
   return "--------\ntest init function has run!\nthe html element does " + (classFound ? "" : "not ") + "have the \n'gnome-test' class.\n--------";
 };
 
-var TestPlugin = (function (Plugin) {
+var TestPlugin = (function (_Plugin) {
   function TestPlugin() {
     _classCallCheck(this, TestPlugin);
 
-    if (Plugin != null) {
-      Plugin.apply(this, arguments);
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
     }
   }
 
-  _inherits(TestPlugin, Plugin);
+  _inherits(TestPlugin, _Plugin);
 
-  _prototypeProperties(TestPlugin, {
-    defaultState: {
-      get: function () {
-        return {
-          testing: true };
-      },
-      configurable: true
-    }
-  }, {
+  _createClass(TestPlugin, {
     setup: {
       value: function setup() {
         var _this = this;
@@ -4166,17 +4328,20 @@ var TestPlugin = (function (Plugin) {
             displayName: "Testing",
             description: "nothing to see here" });
         });
-      },
-      writable: true,
-      configurable: true
+      }
     },
     run: {
       value: function run() {
         var gnomeClassFound = $("html").hasClass("gnome-test");
         console.log(template(gnomeClassFound));
-      },
-      writable: true,
-      configurable: true
+      }
+    }
+  }, {
+    defaultState: {
+      get: function () {
+        return {
+          testing: true };
+      }
     }
   });
 
@@ -4189,12 +4354,12 @@ TestPlugin.meta = {
   displayName: "Gnome Test",
   description: "checks for the existence of the gnome css class" };
 
-},{"../../jsx/hooks":6,"../../jsx/plugin":10}],26:[function(require,module,exports){
+},{"../../jsx/hooks":6,"../../jsx/plugin":10}],28:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -4216,24 +4381,22 @@ var commentTemplate = function (body) {
   return "<div class=\"reddit-prototype-top-comment-text md-container\">\n  " + body + "\n</div>";
 };
 
-var TopCommentPlugin = (function (Plugin) {
+var TopCommentPlugin = (function (_Plugin) {
   function TopCommentPlugin() {
     _classCallCheck(this, TopCommentPlugin);
 
-    if (Plugin != null) {
-      Plugin.apply(this, arguments);
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
     }
   }
 
-  _inherits(TopCommentPlugin, Plugin);
+  _inherits(TopCommentPlugin, _Plugin);
 
-  _prototypeProperties(TopCommentPlugin, null, {
+  _createClass(TopCommentPlugin, {
     shouldRun: {
       value: function shouldRun() {
         return _get(Object.getPrototypeOf(TopCommentPlugin.prototype), "shouldRun", this).call(this) && !context.page;
-      },
-      writable: true,
-      configurable: true
+      }
     },
     run: {
       value: function run() {
@@ -4286,9 +4449,7 @@ var TopCommentPlugin = (function (Plugin) {
           e.preventDefault();
           handleClick($this);
         });
-      },
-      writable: true,
-      configurable: true
+      }
     },
     requestComment: {
       value: function requestComment(pathname, id, cb) {
@@ -4302,9 +4463,7 @@ var TopCommentPlugin = (function (Plugin) {
           var body = unsafe(comment.body_html);
           cb(body);
         });
-      },
-      writable: true,
-      configurable: true
+      }
     }
   });
 
