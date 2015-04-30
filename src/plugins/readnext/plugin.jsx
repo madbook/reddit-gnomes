@@ -15,7 +15,8 @@ export default class ReadNextPlugin extends Plugin {
   }
 
   shouldRun() {
-    return super.shouldRun() && context.page === 'comments';
+    let isNative = $('.read-next').length;
+    return super.shouldRun() && context.page === 'comments' && !isNative;
   }
 
   setup() {
