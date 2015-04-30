@@ -1,5 +1,5 @@
 /**
- * JSXTransformer v0.13.1
+ * JSXTransformer v0.13.0-rc1
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.JSXTransformer = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /**
@@ -401,8 +401,8 @@ function processOptions(opts) {
   if (opts.es6module) {
     options.sourceType = 'module';
   }
-  if (opts.nonStrictEs6module) {
-    options.sourceType = 'nonStrictModule';
+  if (opts.nonStrictEs6Module) {
+    options.sourceType = 'nonStrict6Module';
   }
 
   // Instead of doing any fancy validation, only look for 'es3'. If we have
@@ -503,30 +503,33 @@ Buffer.TYPED_ARRAY_SUPPORT = (function () {
  * prototype.
  */
 function Buffer (subject, encoding, noZero) {
-  if (!(this instanceof Buffer)) return new Buffer(subject, encoding, noZero)
+  if (!(this instanceof Buffer))
+    return new Buffer(subject, encoding, noZero)
 
   var type = typeof subject
-  var length
 
+  // Find the length
+  var length
   if (type === 'number') {
     length = +subject
   } else if (type === 'string') {
     length = Buffer.byteLength(subject, encoding)
-  } else if (type === 'object' && subject !== null) {
-    // assume object is array-like
-    if (subject.type === 'Buffer' && isArray(subject.data)) subject = subject.data
+  } else if (type === 'object' && subject !== null) { // assume object is array-like
+    if (subject.type === 'Buffer' && isArray(subject.data))
+      subject = subject.data
     length = +subject.length
   } else {
     throw new TypeError('must start with number, buffer, array or string')
   }
 
-  if (length > kMaxLength) {
-    throw new RangeError('Attempt to allocate Buffer larger than maximum size: 0x' +
-      kMaxLength.toString(16) + ' bytes')
-  }
+  if (length > kMaxLength)
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+      'size: 0x' + kMaxLength.toString(16) + ' bytes')
 
-  if (length < 0) length = 0
-  else length >>>= 0 // coerce to uint32
+  if (length < 0)
+    length = 0
+  else
+    length >>>= 0 // Coerce to uint32.
 
   var self = this
   if (Buffer.TYPED_ARRAY_SUPPORT) {
@@ -547,13 +550,11 @@ function Buffer (subject, encoding, noZero) {
   } else if (isArrayish(subject)) {
     // Treat array-ish objects as a byte array
     if (Buffer.isBuffer(subject)) {
-      for (i = 0; i < length; i++) {
+      for (i = 0; i < length; i++)
         self[i] = subject.readUInt8(i)
-      }
     } else {
-      for (i = 0; i < length; i++) {
+      for (i = 0; i < length; i++)
         self[i] = ((subject[i] % 256) + 256) % 256
-      }
     }
   } else if (type === 'string') {
     self.write(subject, 0, encoding)
@@ -563,27 +564,28 @@ function Buffer (subject, encoding, noZero) {
     }
   }
 
-  if (length > 0 && length <= Buffer.poolSize) self.parent = rootParent
+  if (length > 0 && length <= Buffer.poolSize)
+    self.parent = rootParent
 
   return self
 }
 
 function SlowBuffer (subject, encoding, noZero) {
-  if (!(this instanceof SlowBuffer)) return new SlowBuffer(subject, encoding, noZero)
+  if (!(this instanceof SlowBuffer))
+    return new SlowBuffer(subject, encoding, noZero)
 
   var buf = new Buffer(subject, encoding, noZero)
   delete buf.parent
   return buf
 }
 
-Buffer.isBuffer = function isBuffer (b) {
+Buffer.isBuffer = function (b) {
   return !!(b != null && b._isBuffer)
 }
 
-Buffer.compare = function compare (a, b) {
-  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+Buffer.compare = function (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b))
     throw new TypeError('Arguments must be Buffers')
-  }
 
   if (a === b) return 0
 
@@ -599,7 +601,7 @@ Buffer.compare = function compare (a, b) {
   return 0
 }
 
-Buffer.isEncoding = function isEncoding (encoding) {
+Buffer.isEncoding = function (encoding) {
   switch (String(encoding).toLowerCase()) {
     case 'hex':
     case 'utf8':
@@ -618,7 +620,7 @@ Buffer.isEncoding = function isEncoding (encoding) {
   }
 }
 
-Buffer.concat = function concat (list, totalLength) {
+Buffer.concat = function (list, totalLength) {
   if (!isArray(list)) throw new TypeError('Usage: Buffer.concat(list[, length])')
 
   if (list.length === 0) {
@@ -645,7 +647,7 @@ Buffer.concat = function concat (list, totalLength) {
   return buf
 }
 
-Buffer.byteLength = function byteLength (str, encoding) {
+Buffer.byteLength = function (str, encoding) {
   var ret
   str = str + ''
   switch (encoding || 'utf8') {
@@ -681,7 +683,7 @@ Buffer.prototype.length = undefined
 Buffer.prototype.parent = undefined
 
 // toString(encoding, start=0, end=buffer.length)
-Buffer.prototype.toString = function toString (encoding, start, end) {
+Buffer.prototype.toString = function (encoding, start, end) {
   var loweredCase = false
 
   start = start >>> 0
@@ -717,84 +719,45 @@ Buffer.prototype.toString = function toString (encoding, start, end) {
         return utf16leSlice(this, start, end)
 
       default:
-        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        if (loweredCase)
+          throw new TypeError('Unknown encoding: ' + encoding)
         encoding = (encoding + '').toLowerCase()
         loweredCase = true
     }
   }
 }
 
-Buffer.prototype.equals = function equals (b) {
+Buffer.prototype.equals = function (b) {
   if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
   if (this === b) return true
   return Buffer.compare(this, b) === 0
 }
 
-Buffer.prototype.inspect = function inspect () {
+Buffer.prototype.inspect = function () {
   var str = ''
   var max = exports.INSPECT_MAX_BYTES
   if (this.length > 0) {
     str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
-    if (this.length > max) str += ' ... '
+    if (this.length > max)
+      str += ' ... '
   }
   return '<Buffer ' + str + '>'
 }
 
-Buffer.prototype.compare = function compare (b) {
+Buffer.prototype.compare = function (b) {
   if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
   if (this === b) return 0
   return Buffer.compare(this, b)
 }
 
-Buffer.prototype.indexOf = function indexOf (val, byteOffset) {
-  if (byteOffset > 0x7fffffff) byteOffset = 0x7fffffff
-  else if (byteOffset < -0x80000000) byteOffset = -0x80000000
-  byteOffset >>= 0
-
-  if (this.length === 0) return -1
-  if (byteOffset >= this.length) return -1
-
-  // Negative offsets start from the end of the buffer
-  if (byteOffset < 0) byteOffset = Math.max(this.length + byteOffset, 0)
-
-  if (typeof val === 'string') {
-    if (val.length === 0) return -1 // special case: looking for empty string always fails
-    return String.prototype.indexOf.call(this, val, byteOffset)
-  }
-  if (Buffer.isBuffer(val)) {
-    return arrayIndexOf(this, val, byteOffset)
-  }
-  if (typeof val === 'number') {
-    if (Buffer.TYPED_ARRAY_SUPPORT && Uint8Array.prototype.indexOf === 'function') {
-      return Uint8Array.prototype.indexOf.call(this, val, byteOffset)
-    }
-    return arrayIndexOf(this, [ val ], byteOffset)
-  }
-
-  function arrayIndexOf (arr, val, byteOffset) {
-    var foundIndex = -1
-    for (var i = 0; byteOffset + i < arr.length; i++) {
-      if (arr[byteOffset + i] === val[foundIndex === -1 ? 0 : i - foundIndex]) {
-        if (foundIndex === -1) foundIndex = i
-        if (i - foundIndex + 1 === val.length) return byteOffset + foundIndex
-      } else {
-        foundIndex = -1
-      }
-    }
-    return -1
-  }
-
-  throw new TypeError('val must be string, number or Buffer')
-}
-
 // `get` will be removed in Node 0.13+
-Buffer.prototype.get = function get (offset) {
+Buffer.prototype.get = function (offset) {
   console.log('.get() is deprecated. Access using array indexes instead.')
   return this.readUInt8(offset)
 }
 
 // `set` will be removed in Node 0.13+
-Buffer.prototype.set = function set (v, offset) {
+Buffer.prototype.set = function (v, offset) {
   console.log('.set() is deprecated. Access using array indexes instead.')
   return this.writeUInt8(v, offset)
 }
@@ -819,9 +782,9 @@ function hexWrite (buf, string, offset, length) {
     length = strLen / 2
   }
   for (var i = 0; i < length; i++) {
-    var parsed = parseInt(string.substr(i * 2, 2), 16)
-    if (isNaN(parsed)) throw new Error('Invalid hex string')
-    buf[offset + i] = parsed
+    var byte = parseInt(string.substr(i * 2, 2), 16)
+    if (isNaN(byte)) throw new Error('Invalid hex string')
+    buf[offset + i] = byte
   }
   return i
 }
@@ -850,7 +813,7 @@ function utf16leWrite (buf, string, offset, length) {
   return charsWritten
 }
 
-Buffer.prototype.write = function write (string, offset, length, encoding) {
+Buffer.prototype.write = function (string, offset, length, encoding) {
   // Support both (string, offset, length, encoding)
   // and the legacy (string, encoding, offset, length)
   if (isFinite(offset)) {
@@ -867,9 +830,8 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
 
   offset = Number(offset) || 0
 
-  if (length < 0 || offset < 0 || offset > this.length) {
+  if (length < 0 || offset < 0 || offset > this.length)
     throw new RangeError('attempt to write outside buffer bounds')
-  }
 
   var remaining = this.length - offset
   if (!length) {
@@ -912,7 +874,7 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
   return ret
 }
 
-Buffer.prototype.toJSON = function toJSON () {
+Buffer.prototype.toJSON = function () {
   return {
     type: 'Buffer',
     data: Array.prototype.slice.call(this._arr || this, 0)
@@ -986,26 +948,29 @@ function utf16leSlice (buf, start, end) {
   return res
 }
 
-Buffer.prototype.slice = function slice (start, end) {
+Buffer.prototype.slice = function (start, end) {
   var len = this.length
   start = ~~start
   end = end === undefined ? len : ~~end
 
   if (start < 0) {
     start += len
-    if (start < 0) start = 0
+    if (start < 0)
+      start = 0
   } else if (start > len) {
     start = len
   }
 
   if (end < 0) {
     end += len
-    if (end < 0) end = 0
+    if (end < 0)
+      end = 0
   } else if (end > len) {
     end = len
   }
 
-  if (end < start) end = start
+  if (end < start)
+    end = start
 
   var newBuf
   if (Buffer.TYPED_ARRAY_SUPPORT) {
@@ -1018,7 +983,8 @@ Buffer.prototype.slice = function slice (start, end) {
     }
   }
 
-  if (newBuf.length) newBuf.parent = this.parent || this
+  if (newBuf.length)
+    newBuf.parent = this.parent || this
 
   return newBuf
 }
@@ -1027,58 +993,62 @@ Buffer.prototype.slice = function slice (start, end) {
  * Need to make sure that buffer isn't trying to write out of bounds.
  */
 function checkOffset (offset, ext, length) {
-  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
-  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+  if ((offset % 1) !== 0 || offset < 0)
+    throw new RangeError('offset is not uint')
+  if (offset + ext > length)
+    throw new RangeError('Trying to access beyond buffer length')
 }
 
-Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+Buffer.prototype.readUIntLE = function (offset, byteLength, noAssert) {
   offset = offset >>> 0
   byteLength = byteLength >>> 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
+  if (!noAssert)
+    checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
   var mul = 1
   var i = 0
-  while (++i < byteLength && (mul *= 0x100)) {
+  while (++i < byteLength && (mul *= 0x100))
     val += this[offset + i] * mul
-  }
 
   return val
 }
 
-Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+Buffer.prototype.readUIntBE = function (offset, byteLength, noAssert) {
   offset = offset >>> 0
   byteLength = byteLength >>> 0
-  if (!noAssert) {
+  if (!noAssert)
     checkOffset(offset, byteLength, this.length)
-  }
 
   var val = this[offset + --byteLength]
   var mul = 1
-  while (byteLength > 0 && (mul *= 0x100)) {
+  while (byteLength > 0 && (mul *= 0x100))
     val += this[offset + --byteLength] * mul
-  }
 
   return val
 }
 
-Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 1, this.length)
+Buffer.prototype.readUInt8 = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 1, this.length)
   return this[offset]
 }
 
-Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
+Buffer.prototype.readUInt16LE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 2, this.length)
   return this[offset] | (this[offset + 1] << 8)
 }
 
-Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
+Buffer.prototype.readUInt16BE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 2, this.length)
   return (this[offset] << 8) | this[offset + 1]
 }
 
-Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
+Buffer.prototype.readUInt32LE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 4, this.length)
 
   return ((this[offset]) |
       (this[offset + 1] << 8) |
@@ -1086,104 +1056,117 @@ Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
       (this[offset + 3] * 0x1000000)
 }
 
-Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
+Buffer.prototype.readUInt32BE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 4, this.length)
 
   return (this[offset] * 0x1000000) +
-    ((this[offset + 1] << 16) |
-    (this[offset + 2] << 8) |
-    this[offset + 3])
+      ((this[offset + 1] << 16) |
+      (this[offset + 2] << 8) |
+      this[offset + 3])
 }
 
-Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+Buffer.prototype.readIntLE = function (offset, byteLength, noAssert) {
   offset = offset >>> 0
   byteLength = byteLength >>> 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
+  if (!noAssert)
+    checkOffset(offset, byteLength, this.length)
 
   var val = this[offset]
   var mul = 1
   var i = 0
-  while (++i < byteLength && (mul *= 0x100)) {
+  while (++i < byteLength && (mul *= 0x100))
     val += this[offset + i] * mul
-  }
   mul *= 0x80
 
-  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+  if (val >= mul)
+    val -= Math.pow(2, 8 * byteLength)
 
   return val
 }
 
-Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+Buffer.prototype.readIntBE = function (offset, byteLength, noAssert) {
   offset = offset >>> 0
   byteLength = byteLength >>> 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
+  if (!noAssert)
+    checkOffset(offset, byteLength, this.length)
 
   var i = byteLength
   var mul = 1
   var val = this[offset + --i]
-  while (i > 0 && (mul *= 0x100)) {
+  while (i > 0 && (mul *= 0x100))
     val += this[offset + --i] * mul
-  }
   mul *= 0x80
 
-  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+  if (val >= mul)
+    val -= Math.pow(2, 8 * byteLength)
 
   return val
 }
 
-Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 1, this.length)
-  if (!(this[offset] & 0x80)) return (this[offset])
+Buffer.prototype.readInt8 = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80))
+    return (this[offset])
   return ((0xff - this[offset] + 1) * -1)
 }
 
-Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
+Buffer.prototype.readInt16LE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 2, this.length)
   var val = this[offset] | (this[offset + 1] << 8)
   return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
-Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
+Buffer.prototype.readInt16BE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 2, this.length)
   var val = this[offset + 1] | (this[offset] << 8)
   return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
-Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
+Buffer.prototype.readInt32LE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 4, this.length)
 
   return (this[offset]) |
-    (this[offset + 1] << 8) |
-    (this[offset + 2] << 16) |
-    (this[offset + 3] << 24)
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16) |
+      (this[offset + 3] << 24)
 }
 
-Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
+Buffer.prototype.readInt32BE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 4, this.length)
 
   return (this[offset] << 24) |
-    (this[offset + 1] << 16) |
-    (this[offset + 2] << 8) |
-    (this[offset + 3])
+      (this[offset + 1] << 16) |
+      (this[offset + 2] << 8) |
+      (this[offset + 3])
 }
 
-Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
+Buffer.prototype.readFloatLE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 4, this.length)
   return ieee754.read(this, offset, true, 23, 4)
 }
 
-Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
+Buffer.prototype.readFloatBE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 4, this.length)
   return ieee754.read(this, offset, false, 23, 4)
 }
 
-Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 8, this.length)
+Buffer.prototype.readDoubleLE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 8, this.length)
   return ieee754.read(this, offset, true, 52, 8)
 }
 
-Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 8, this.length)
+Buffer.prototype.readDoubleBE = function (offset, noAssert) {
+  if (!noAssert)
+    checkOffset(offset, 8, this.length)
   return ieee754.read(this, offset, false, 52, 8)
 }
 
@@ -1193,42 +1176,43 @@ function checkInt (buf, value, offset, ext, max, min) {
   if (offset + ext > buf.length) throw new RangeError('index out of range')
 }
 
-Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+Buffer.prototype.writeUIntLE = function (value, offset, byteLength, noAssert) {
   value = +value
   offset = offset >>> 0
   byteLength = byteLength >>> 0
-  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+  if (!noAssert)
+    checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
 
   var mul = 1
   var i = 0
   this[offset] = value & 0xFF
-  while (++i < byteLength && (mul *= 0x100)) {
+  while (++i < byteLength && (mul *= 0x100))
     this[offset + i] = (value / mul) >>> 0 & 0xFF
-  }
 
   return offset + byteLength
 }
 
-Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+Buffer.prototype.writeUIntBE = function (value, offset, byteLength, noAssert) {
   value = +value
   offset = offset >>> 0
   byteLength = byteLength >>> 0
-  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+  if (!noAssert)
+    checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
 
   var i = byteLength - 1
   var mul = 1
   this[offset + i] = value & 0xFF
-  while (--i >= 0 && (mul *= 0x100)) {
+  while (--i >= 0 && (mul *= 0x100))
     this[offset + i] = (value / mul) >>> 0 & 0xFF
-  }
 
   return offset + byteLength
 }
 
-Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+Buffer.prototype.writeUInt8 = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  if (!noAssert)
+    checkInt(this, value, offset, 1, 0xff, 0)
   if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   this[offset] = value
   return offset + 1
@@ -1242,29 +1226,27 @@ function objectWriteUInt16 (buf, value, offset, littleEndian) {
   }
 }
 
-Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+Buffer.prototype.writeUInt16LE = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (!noAssert)
+    checkInt(this, value, offset, 2, 0xffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
     this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
+  } else objectWriteUInt16(this, value, offset, true)
   return offset + 2
 }
 
-Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+Buffer.prototype.writeUInt16BE = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (!noAssert)
+    checkInt(this, value, offset, 2, 0xffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 8)
     this[offset + 1] = value
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
+  } else objectWriteUInt16(this, value, offset, false)
   return offset + 2
 }
 
@@ -1275,144 +1257,139 @@ function objectWriteUInt32 (buf, value, offset, littleEndian) {
   }
 }
 
-Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+Buffer.prototype.writeUInt32LE = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (!noAssert)
+    checkInt(this, value, offset, 4, 0xffffffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset + 3] = (value >>> 24)
     this[offset + 2] = (value >>> 16)
     this[offset + 1] = (value >>> 8)
     this[offset] = value
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
+  } else objectWriteUInt32(this, value, offset, true)
   return offset + 4
 }
 
-Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+Buffer.prototype.writeUInt32BE = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (!noAssert)
+    checkInt(this, value, offset, 4, 0xffffffff, 0)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 24)
     this[offset + 1] = (value >>> 16)
     this[offset + 2] = (value >>> 8)
     this[offset + 3] = value
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
+  } else objectWriteUInt32(this, value, offset, false)
   return offset + 4
 }
 
-Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+Buffer.prototype.writeIntLE = function (value, offset, byteLength, noAssert) {
   value = +value
   offset = offset >>> 0
   if (!noAssert) {
-    checkInt(
-      this, value, offset, byteLength,
-      Math.pow(2, 8 * byteLength - 1) - 1,
-      -Math.pow(2, 8 * byteLength - 1)
-    )
+    checkInt(this,
+             value,
+             offset,
+             byteLength,
+             Math.pow(2, 8 * byteLength - 1) - 1,
+             -Math.pow(2, 8 * byteLength - 1))
   }
 
   var i = 0
   var mul = 1
   var sub = value < 0 ? 1 : 0
   this[offset] = value & 0xFF
-  while (++i < byteLength && (mul *= 0x100)) {
+  while (++i < byteLength && (mul *= 0x100))
     this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
-  }
 
   return offset + byteLength
 }
 
-Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+Buffer.prototype.writeIntBE = function (value, offset, byteLength, noAssert) {
   value = +value
   offset = offset >>> 0
   if (!noAssert) {
-    checkInt(
-      this, value, offset, byteLength,
-      Math.pow(2, 8 * byteLength - 1) - 1,
-      -Math.pow(2, 8 * byteLength - 1)
-    )
+    checkInt(this,
+             value,
+             offset,
+             byteLength,
+             Math.pow(2, 8 * byteLength - 1) - 1,
+             -Math.pow(2, 8 * byteLength - 1))
   }
 
   var i = byteLength - 1
   var mul = 1
   var sub = value < 0 ? 1 : 0
   this[offset + i] = value & 0xFF
-  while (--i >= 0 && (mul *= 0x100)) {
+  while (--i >= 0 && (mul *= 0x100))
     this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
-  }
 
   return offset + byteLength
 }
 
-Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+Buffer.prototype.writeInt8 = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (!noAssert)
+    checkInt(this, value, offset, 1, 0x7f, -0x80)
   if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   if (value < 0) value = 0xff + value + 1
   this[offset] = value
   return offset + 1
 }
 
-Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+Buffer.prototype.writeInt16LE = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (!noAssert)
+    checkInt(this, value, offset, 2, 0x7fff, -0x8000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
     this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
+  } else objectWriteUInt16(this, value, offset, true)
   return offset + 2
 }
 
-Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+Buffer.prototype.writeInt16BE = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (!noAssert)
+    checkInt(this, value, offset, 2, 0x7fff, -0x8000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 8)
     this[offset + 1] = value
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
+  } else objectWriteUInt16(this, value, offset, false)
   return offset + 2
 }
 
-Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+Buffer.prototype.writeInt32LE = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (!noAssert)
+    checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = value
     this[offset + 1] = (value >>> 8)
     this[offset + 2] = (value >>> 16)
     this[offset + 3] = (value >>> 24)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
+  } else objectWriteUInt32(this, value, offset, true)
   return offset + 4
 }
 
-Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+Buffer.prototype.writeInt32BE = function (value, offset, noAssert) {
   value = +value
   offset = offset >>> 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (!noAssert)
+    checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (value < 0) value = 0xffffffff + value + 1
   if (Buffer.TYPED_ARRAY_SUPPORT) {
     this[offset] = (value >>> 24)
     this[offset + 1] = (value >>> 16)
     this[offset + 2] = (value >>> 8)
     this[offset + 3] = value
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
+  } else objectWriteUInt32(this, value, offset, false)
   return offset + 4
 }
 
@@ -1423,39 +1400,37 @@ function checkIEEE754 (buf, value, offset, ext, max, min) {
 }
 
 function writeFloat (buf, value, offset, littleEndian, noAssert) {
-  if (!noAssert) {
+  if (!noAssert)
     checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
-  }
   ieee754.write(buf, value, offset, littleEndian, 23, 4)
   return offset + 4
 }
 
-Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+Buffer.prototype.writeFloatLE = function (value, offset, noAssert) {
   return writeFloat(this, value, offset, true, noAssert)
 }
 
-Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+Buffer.prototype.writeFloatBE = function (value, offset, noAssert) {
   return writeFloat(this, value, offset, false, noAssert)
 }
 
 function writeDouble (buf, value, offset, littleEndian, noAssert) {
-  if (!noAssert) {
+  if (!noAssert)
     checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
-  }
   ieee754.write(buf, value, offset, littleEndian, 52, 8)
   return offset + 8
 }
 
-Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+Buffer.prototype.writeDoubleLE = function (value, offset, noAssert) {
   return writeDouble(this, value, offset, true, noAssert)
 }
 
-Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+Buffer.prototype.writeDoubleBE = function (value, offset, noAssert) {
   return writeDouble(this, value, offset, false, noAssert)
 }
 
 // copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
-Buffer.prototype.copy = function copy (target, target_start, start, end) {
+Buffer.prototype.copy = function (target, target_start, start, end) {
   var self = this // source
 
   if (!start) start = 0
@@ -1469,17 +1444,16 @@ Buffer.prototype.copy = function copy (target, target_start, start, end) {
   if (target.length === 0 || self.length === 0) return 0
 
   // Fatal error conditions
-  if (target_start < 0) {
+  if (target_start < 0)
     throw new RangeError('targetStart out of bounds')
-  }
   if (start < 0 || start >= self.length) throw new RangeError('sourceStart out of bounds')
   if (end < 0) throw new RangeError('sourceEnd out of bounds')
 
   // Are we oob?
-  if (end > this.length) end = this.length
-  if (target.length - target_start < end - start) {
+  if (end > this.length)
+    end = this.length
+  if (target.length - target_start < end - start)
     end = target.length - target_start + start
-  }
 
   var len = end - start
 
@@ -1495,7 +1469,7 @@ Buffer.prototype.copy = function copy (target, target_start, start, end) {
 }
 
 // fill(value, start=0, end=buffer.length)
-Buffer.prototype.fill = function fill (value, start, end) {
+Buffer.prototype.fill = function (value, start, end) {
   if (!value) value = 0
   if (!start) start = 0
   if (!end) end = this.length
@@ -1529,7 +1503,7 @@ Buffer.prototype.fill = function fill (value, start, end) {
  * Creates a new `ArrayBuffer` with the *copied* memory of the buffer instance.
  * Added in Node 0.12. Only available in browsers that support ArrayBuffer.
  */
-Buffer.prototype.toArrayBuffer = function toArrayBuffer () {
+Buffer.prototype.toArrayBuffer = function () {
   if (typeof Uint8Array !== 'undefined') {
     if (Buffer.TYPED_ARRAY_SUPPORT) {
       return (new Buffer(this)).buffer
@@ -1553,7 +1527,7 @@ var BP = Buffer.prototype
 /**
  * Augment a Uint8Array *instance* (not the Uint8Array class!) with Buffer methods
  */
-Buffer._augment = function _augment (arr) {
+Buffer._augment = function (arr) {
   arr.constructor = Buffer
   arr._isBuffer = true
 
@@ -1571,7 +1545,6 @@ Buffer._augment = function _augment (arr) {
   arr.toJSON = BP.toJSON
   arr.equals = BP.equals
   arr.compare = BP.compare
-  arr.indexOf = BP.indexOf
   arr.copy = BP.copy
   arr.slice = BP.slice
   arr.readUIntLE = BP.readUIntLE
@@ -1759,7 +1732,8 @@ function base64ToBytes (str) {
 
 function blitBuffer (src, dst, offset, length) {
   for (var i = 0; i < length; i++) {
-    if ((i + offset >= dst.length) || (i >= src.length)) break
+    if ((i + offset >= dst.length) || (i >= src.length))
+      break
     dst[i + offset] = src[i]
   }
   return i
@@ -2285,7 +2259,6 @@ process.browser = true;
 process.env = {};
 process.argv = [];
 process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
 
 function noop() {}
 
@@ -2341,6 +2314,32 @@ process.umask = function() { return 0; };
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*jslint bitwise:true plusplus:true */
+/*global esprima:true, define:true, exports:true, window: true,
+throwErrorTolerant: true,
+throwError: true, generateStatement: true, peek: true,
+parseAssignmentExpression: true, parseBlock: true,
+parseClassExpression: true, parseClassDeclaration: true, parseExpression: true,
+parseDeclareClass: true, parseDeclareFunction: true,
+parseDeclareModule: true, parseDeclareVariable: true,
+parseForStatement: true,
+parseFunctionDeclaration: true, parseFunctionExpression: true,
+parseFunctionSourceElements: true, parseVariableIdentifier: true,
+parseImportSpecifier: true, parseInterface: true,
+parseLeftHandSideExpression: true, parseParams: true, validateParam: true,
+parseSpreadOrAssignmentExpression: true,
+parseStatement: true, parseSourceElement: true, parseConciseBody: true,
+advanceXJSChild: true, isXJSIdentifierStart: true, isXJSIdentifierPart: true,
+scanXJSStringLiteral: true, scanXJSIdentifier: true,
+parseXJSAttributeValue: true, parseXJSChild: true, parseXJSElement: true, parseXJSExpressionContainer: true, parseXJSEmptyExpression: true,
+parseFunctionTypeParam: true,
+parsePrimaryType: true,
+parseTypeAlias: true,
+parseType: true, parseTypeAnnotatableIdentifier: true, parseTypeAnnotation: true,
+parseTypeParameterDeclaration: true,
+parseYieldExpression: true, parseAwaitExpression: true
+*/
+
 (function (root, factory) {
     'use strict';
 
@@ -2390,8 +2389,8 @@ process.umask = function() { return 0; };
         StringLiteral: 8,
         RegularExpression: 9,
         Template: 10,
-        JSXIdentifier: 11,
-        JSXText: 12
+        XJSIdentifier: 11,
+        XJSText: 12
     };
 
     TokenName = {};
@@ -2403,8 +2402,8 @@ process.umask = function() { return 0; };
     TokenName[Token.NumericLiteral] = 'Numeric';
     TokenName[Token.Punctuator] = 'Punctuator';
     TokenName[Token.StringLiteral] = 'String';
-    TokenName[Token.JSXIdentifier] = 'JSXIdentifier';
-    TokenName[Token.JSXText] = 'JSXText';
+    TokenName[Token.XJSIdentifier] = 'XJSIdentifier';
+    TokenName[Token.XJSText] = 'XJSText';
     TokenName[Token.RegularExpression] = 'RegularExpression';
 
     // A function following one of those tokens is an expression.
@@ -2515,17 +2514,17 @@ process.umask = function() { return 0; };
         VoidTypeAnnotation: 'VoidTypeAnnotation',
         WhileStatement: 'WhileStatement',
         WithStatement: 'WithStatement',
-        JSXIdentifier: 'JSXIdentifier',
-        JSXNamespacedName: 'JSXNamespacedName',
-        JSXMemberExpression: 'JSXMemberExpression',
-        JSXEmptyExpression: 'JSXEmptyExpression',
-        JSXExpressionContainer: 'JSXExpressionContainer',
-        JSXElement: 'JSXElement',
-        JSXClosingElement: 'JSXClosingElement',
-        JSXOpeningElement: 'JSXOpeningElement',
-        JSXAttribute: 'JSXAttribute',
-        JSXSpreadAttribute: 'JSXSpreadAttribute',
-        JSXText: 'JSXText',
+        XJSIdentifier: 'XJSIdentifier',
+        XJSNamespacedName: 'XJSNamespacedName',
+        XJSMemberExpression: 'XJSMemberExpression',
+        XJSEmptyExpression: 'XJSEmptyExpression',
+        XJSExpressionContainer: 'XJSExpressionContainer',
+        XJSElement: 'XJSElement',
+        XJSClosingElement: 'XJSClosingElement',
+        XJSOpeningElement: 'XJSOpeningElement',
+        XJSAttribute: 'XJSAttribute',
+        XJSSpreadAttribute: 'XJSSpreadAttribute',
+        XJSText: 'XJSText',
         YieldExpression: 'YieldExpression',
         AwaitExpression: 'AwaitExpression'
     };
@@ -2543,33 +2542,32 @@ process.umask = function() { return 0; };
 
     // Error messages should be identical to V8.
     Messages = {
-        UnexpectedToken: 'Unexpected token %0',
-        UnexpectedNumber: 'Unexpected number',
-        UnexpectedString: 'Unexpected string',
-        UnexpectedIdentifier: 'Unexpected identifier',
-        UnexpectedReserved: 'Unexpected reserved word',
-        UnexpectedTemplate: 'Unexpected quasi %0',
-        UnexpectedEOS: 'Unexpected end of input',
-        NewlineAfterThrow: 'Illegal newline after throw',
+        UnexpectedToken:  'Unexpected token %0',
+        UnexpectedNumber:  'Unexpected number',
+        UnexpectedString:  'Unexpected string',
+        UnexpectedIdentifier:  'Unexpected identifier',
+        UnexpectedReserved:  'Unexpected reserved word',
+        UnexpectedTemplate:  'Unexpected quasi %0',
+        UnexpectedEOS:  'Unexpected end of input',
+        NewlineAfterThrow:  'Illegal newline after throw',
         InvalidRegExp: 'Invalid regular expression',
-        UnterminatedRegExp: 'Invalid regular expression: missing /',
-        InvalidLHSInAssignment: 'Invalid left-hand side in assignment',
-        InvalidLHSInFormalsList: 'Invalid left-hand side in formals list',
-        InvalidLHSInForIn: 'Invalid left-hand side in for-in',
+        UnterminatedRegExp:  'Invalid regular expression: missing /',
+        InvalidLHSInAssignment:  'Invalid left-hand side in assignment',
+        InvalidLHSInFormalsList:  'Invalid left-hand side in formals list',
+        InvalidLHSInForIn:  'Invalid left-hand side in for-in',
         MultipleDefaultsInSwitch: 'More than one default clause in switch statement',
-        NoCatchOrFinally: 'Missing catch or finally after try',
+        NoCatchOrFinally:  'Missing catch or finally after try',
         UnknownLabel: 'Undefined label \'%0\'',
         Redeclaration: '%0 \'%1\' has already been declared',
         IllegalContinue: 'Illegal continue statement',
         IllegalBreak: 'Illegal break statement',
         IllegalDuplicateClassProperty: 'Illegal duplicate property in class definition',
-        IllegalClassConstructorProperty: 'Illegal constructor property in class definition',
         IllegalReturn: 'Illegal return statement',
         IllegalSpread: 'Illegal spread element',
-        StrictModeWith: 'Strict mode code may not include a with statement',
-        StrictCatchVariable: 'Catch variable may not be eval or arguments in strict mode',
-        StrictVarName: 'Variable name may not be eval or arguments in strict mode',
-        StrictParamName: 'Parameter name eval or arguments is not allowed in strict mode',
+        StrictModeWith:  'Strict mode code may not include a with statement',
+        StrictCatchVariable:  'Catch variable may not be eval or arguments in strict mode',
+        StrictVarName:  'Variable name may not be eval or arguments in strict mode',
+        StrictParamName:  'Parameter name eval or arguments is not allowed in strict mode',
         StrictParamDupe: 'Strict mode function may not have duplicate parameter names',
         ParameterAfterRestParameter: 'Rest parameter must be final parameter of an argument list',
         DefaultRestParameter: 'Rest parameter can not have a default value',
@@ -2577,28 +2575,28 @@ process.umask = function() { return 0; };
         PropertyAfterSpreadProperty: 'A rest property must be the final property of an object literal',
         ObjectPatternAsRestParameter: 'Invalid rest parameter',
         ObjectPatternAsSpread: 'Invalid spread argument',
-        StrictFunctionName: 'Function name may not be eval or arguments in strict mode',
-        StrictOctalLiteral: 'Octal literals are not allowed in strict mode.',
-        StrictDelete: 'Delete of an unqualified identifier in strict mode.',
-        StrictDuplicateProperty: 'Duplicate data property in object literal not allowed in strict mode',
-        AccessorDataProperty: 'Object literal may not have data and accessor property with the same name',
-        AccessorGetSet: 'Object literal may not have multiple get/set accessors with the same name',
-        StrictLHSAssignment: 'Assignment to eval or arguments is not allowed in strict mode',
-        StrictLHSPostfix: 'Postfix increment/decrement may not have eval or arguments operand in strict mode',
-        StrictLHSPrefix: 'Prefix increment/decrement may not have eval or arguments operand in strict mode',
-        StrictReservedWord: 'Use of future reserved word in strict mode',
+        StrictFunctionName:  'Function name may not be eval or arguments in strict mode',
+        StrictOctalLiteral:  'Octal literals are not allowed in strict mode.',
+        StrictDelete:  'Delete of an unqualified identifier in strict mode.',
+        StrictDuplicateProperty:  'Duplicate data property in object literal not allowed in strict mode',
+        AccessorDataProperty:  'Object literal may not have data and accessor property with the same name',
+        AccessorGetSet:  'Object literal may not have multiple get/set accessors with the same name',
+        StrictLHSAssignment:  'Assignment to eval or arguments is not allowed in strict mode',
+        StrictLHSPostfix:  'Postfix increment/decrement may not have eval or arguments operand in strict mode',
+        StrictLHSPrefix:  'Prefix increment/decrement may not have eval or arguments operand in strict mode',
+        StrictReservedWord:  'Use of future reserved word in strict mode',
         MissingFromClause: 'Missing from clause',
         NoAsAfterImportNamespace: 'Missing as after import *',
         InvalidModuleSpecifier: 'Invalid module specifier',
         IllegalImportDeclaration: 'Illegal import declaration',
         IllegalExportDeclaration: 'Illegal export declaration',
-        NoUninitializedConst: 'Const must be initialized',
+        NoUnintializedConst: 'Const must be initialized',
         ComprehensionRequiresBlock: 'Comprehension must have at least one block',
-        ComprehensionError: 'Comprehension Error',
-        EachNotAllowed: 'Each is not supported',
-        InvalidJSXAttributeValue: 'JSX value should be either an expression or a quoted JSX text',
-        ExpectedJSXClosingTag: 'Expected corresponding JSX closing tag for %0',
-        AdjacentJSXElements: 'Adjacent JSX elements must be wrapped in an enclosing tag',
+        ComprehensionError:  'Comprehension Error',
+        EachNotAllowed:  'Each is not supported',
+        InvalidXJSAttributeValue: 'XJS value should be either an expression or a quoted XJS text',
+        ExpectedXJSClosingTag: 'Expected corresponding XJS closing tag for %0',
+        AdjacentXJSElements: 'Adjacent XJS elements must be wrapped in an enclosing tag',
         ConfusedAboutFunctionType: 'Unexpected token =>. It looks like ' +
             'you are trying to write a function type, but you ended up ' +
             'writing a grouped type followed by an =>, which is a syntax ' +
@@ -2646,7 +2644,7 @@ process.umask = function() { return 0; };
         return Object.prototype.hasOwnProperty.call(this.$data, key);
     };
 
-    StringMap.prototype["delete"] = function (key) {
+    StringMap.prototype['delete'] = function (key) {
         key = '$' + key;
         return delete this.$data[key];
     };
@@ -2778,134 +2776,69 @@ process.umask = function() { return 0; };
 
     // 7.4 Comments
 
-    function addComment(type, value, start, end, loc) {
-        var comment;
-        assert(typeof start === 'number', 'Comment must have valid position');
-
-        // Because the way the actual token is scanned, often the comments
-        // (if any) are skipped twice during the lexical analysis.
-        // Thus, we need to skip adding a comment if the comment array already
-        // handled it.
-        if (state.lastCommentStart >= start) {
-            return;
-        }
-        state.lastCommentStart = start;
-
-        comment = {
-            type: type,
-            value: value
-        };
-        if (extra.range) {
-            comment.range = [start, end];
-        }
-        if (extra.loc) {
-            comment.loc = loc;
-        }
-        extra.comments.push(comment);
-        if (extra.attachComment) {
-            extra.leadingComments.push(comment);
-            extra.trailingComments.push(comment);
-        }
-    }
-
-    function skipSingleLineComment() {
-        var start, loc, ch, comment;
-
-        start = index - 2;
-        loc = {
-            start: {
-                line: lineNumber,
-                column: index - lineStart - 2
-            }
-        };
-
-        while (index < length) {
-            ch = source.charCodeAt(index);
-            ++index;
-            if (isLineTerminator(ch)) {
-                if (extra.comments) {
-                    comment = source.slice(start + 2, index - 1);
-                    loc.end = {
-                        line: lineNumber,
-                        column: index - lineStart - 1
-                    };
-                    addComment('Line', comment, start, index - 1, loc);
-                }
-                if (ch === 13 && source.charCodeAt(index) === 10) {
-                    ++index;
-                }
-                ++lineNumber;
-                lineStart = index;
-                return;
-            }
-        }
-
-        if (extra.comments) {
-            comment = source.slice(start + 2, index);
-            loc.end = {
-                line: lineNumber,
-                column: index - lineStart
-            };
-            addComment('Line', comment, start, index, loc);
-        }
-    }
-
-    function skipMultiLineComment() {
-        var start, loc, ch, comment;
-
-        if (extra.comments) {
-            start = index - 2;
-            loc = {
-                start: {
-                    line: lineNumber,
-                    column: index - lineStart - 2
-                }
-            };
-        }
-
-        while (index < length) {
-            ch = source.charCodeAt(index);
-            if (isLineTerminator(ch)) {
-                if (ch === 13 && source.charCodeAt(index + 1) === 10) {
-                    ++index;
-                }
-                ++lineNumber;
-                ++index;
-                lineStart = index;
-                if (index >= length) {
-                    throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
-                }
-            } else if (ch === 42) {
-                // Block comment ends with '*/' (char #42, char #47).
-                if (source.charCodeAt(index + 1) === 47) {
-                    ++index;
-                    ++index;
-                    if (extra.comments) {
-                        comment = source.slice(start + 2, index - 2);
-                        loc.end = {
-                            line: lineNumber,
-                            column: index - lineStart
-                        };
-                        addComment('Block', comment, start, index, loc);
-                    }
-                    return;
-                }
-                ++index;
-            } else {
-                ++index;
-            }
-        }
-
-        throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
-    }
-
     function skipComment() {
-        var ch;
+        var ch, blockComment, lineComment;
+
+        blockComment = false;
+        lineComment = false;
 
         while (index < length) {
             ch = source.charCodeAt(index);
 
-            if (isWhiteSpace(ch)) {
+            if (lineComment) {
+                ++index;
+                if (isLineTerminator(ch)) {
+                    lineComment = false;
+                    if (ch === 13 && source.charCodeAt(index) === 10) {
+                        ++index;
+                    }
+                    ++lineNumber;
+                    lineStart = index;
+                }
+            } else if (blockComment) {
+                if (isLineTerminator(ch)) {
+                    if (ch === 13) {
+                        ++index;
+                    }
+                    if (ch !== 13 || source.charCodeAt(index) === 10) {
+                        ++lineNumber;
+                        ++index;
+                        lineStart = index;
+                        if (index >= length) {
+                            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                        }
+                    }
+                } else {
+                    ch = source.charCodeAt(index++);
+                    if (index >= length) {
+                        throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                    }
+                    // Block comment ends with '*/' (char #42, char #47).
+                    if (ch === 42) {
+                        ch = source.charCodeAt(index);
+                        if (ch === 47) {
+                            ++index;
+                            blockComment = false;
+                        }
+                    }
+                }
+            } else if (ch === 47) {
+                ch = source.charCodeAt(index + 1);
+                // Line comment starts with '//' (char #47, char #47).
+                if (ch === 47) {
+                    index += 2;
+                    lineComment = true;
+                } else if (ch === 42) {
+                    // Block comment starts with '/*' (char #47, char #42).
+                    index += 2;
+                    blockComment = true;
+                    if (index >= length) {
+                        throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                    }
+                } else {
+                    break;
+                }
+            } else if (isWhiteSpace(ch)) {
                 ++index;
             } else if (isLineTerminator(ch)) {
                 ++index;
@@ -2914,19 +2847,6 @@ process.umask = function() { return 0; };
                 }
                 ++lineNumber;
                 lineStart = index;
-            } else if (ch === 47) { // 47 is '/'
-                ch = source.charCodeAt(index + 1);
-                if (ch === 47) {
-                    ++index;
-                    ++index;
-                    skipSingleLineComment();
-                } else if (ch === 42) {  // 42 is '*'
-                    ++index;
-                    ++index;
-                    skipMultiLineComment();
-                } else {
-                    break;
-                }
             } else {
                 break;
             }
@@ -3089,7 +3009,7 @@ process.umask = function() { return 0; };
             ch3,
             ch4;
 
-        if (state.inJSXTag || state.inJSXChild) {
+        if (state.inXJSTag || state.inXJSChild) {
             // Don't need to check for '{' and '}' as it's already handled
             // correctly by default.
             switch (code) {
@@ -3205,7 +3125,7 @@ process.umask = function() { return 0; };
 
         // 3-character punctuators: === !== >>> <<= >>=
 
-        if (ch1 === '>' && ch2 === '>' && ch3 === '>' && !state.inType) {
+        if (ch1 === '>' && ch2 === '>' && ch3 === '>') {
             index += 3;
             return {
                 type: Token.Punctuator,
@@ -3329,41 +3249,6 @@ process.umask = function() { return 0; };
         };
     }
 
-    function scanBinaryLiteral(start) {
-        var ch, number;
-
-        number = '';
-
-        while (index < length) {
-            ch = source[index];
-            if (ch !== '0' && ch !== '1') {
-                break;
-            }
-            number += source[index++];
-        }
-
-        if (number.length === 0) {
-            // only 0b or 0B
-            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
-        }
-
-        if (index < length) {
-            ch = source.charCodeAt(index);
-            /* istanbul ignore else */
-            if (isIdentifierStart(ch) || isDecimalDigit(ch)) {
-                throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
-            }
-        }
-
-        return {
-            type: Token.NumericLiteral,
-            value: parseInt(number, 2),
-            lineNumber: lineNumber,
-            lineStart: lineStart,
-            range: [start, index]
-        };
-    }
-
     function scanOctalLiteral(prefix, start) {
         var number, octal;
 
@@ -3403,7 +3288,7 @@ process.umask = function() { return 0; };
     }
 
     function scanNumericLiteral() {
-        var number, start, ch;
+        var number, start, ch, octal;
 
         ch = source[index];
         assert(isDecimalDigit(ch.charCodeAt(0)) || (ch === '.'),
@@ -3426,7 +3311,35 @@ process.umask = function() { return 0; };
                 }
                 if (ch === 'b' || ch === 'B') {
                     ++index;
-                    return scanBinaryLiteral(start);
+                    number = '';
+
+                    while (index < length) {
+                        ch = source[index];
+                        if (ch !== '0' && ch !== '1') {
+                            break;
+                        }
+                        number += source[index++];
+                    }
+
+                    if (number.length === 0) {
+                        // only 0b or 0B
+                        throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                    }
+
+                    if (index < length) {
+                        ch = source.charCodeAt(index);
+                        /* istanbul ignore else */
+                        if (isIdentifierStart(ch) || isDecimalDigit(ch)) {
+                            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                        }
+                    }
+                    return {
+                        type: Token.NumericLiteral,
+                        value: parseInt(number, 2),
+                        lineNumber: lineNumber,
+                        lineStart: lineStart,
+                        range: [start, index]
+                    };
                 }
                 if (ch === 'o' || ch === 'O' || isOctalDigit(ch)) {
                     return scanOctalLiteral(ch, start);
@@ -3567,7 +3480,7 @@ process.umask = function() { return 0; };
                     }
                 } else {
                     ++lineNumber;
-                    if (ch === '\r' && source[index] === '\n') {
+                    if (ch ===  '\r' && source[index] === '\n') {
                         ++index;
                     }
                     lineStart = index;
@@ -3684,14 +3597,14 @@ process.umask = function() { return 0; };
                     }
                 } else {
                     ++lineNumber;
-                    if (ch === '\r' && source[index] === '\n') {
+                    if (ch ===  '\r' && source[index] === '\n') {
                         ++index;
                     }
                     lineStart = index;
                 }
             } else if (isLineTerminator(ch.charCodeAt(0))) {
                 ++lineNumber;
-                if (ch === '\r' && source[index] === '\n') {
+                if (ch ===  '\r' && source[index] === '\n') {
                     ++index;
                 }
                 lineStart = index;
@@ -3738,10 +3651,86 @@ process.umask = function() { return 0; };
         return template;
     }
 
-    function testRegExp(pattern, flags) {
-        var tmp = pattern,
-            value;
+    function scanRegExp() {
+        var str, ch, start, pattern, flags, value, classMarker = false, restore, terminated = false, tmp;
 
+        lookahead = null;
+        skipComment();
+
+        start = index;
+        ch = source[index];
+        assert(ch === '/', 'Regular expression literal must start with a slash');
+        str = source[index++];
+
+        while (index < length) {
+            ch = source[index++];
+            str += ch;
+            if (classMarker) {
+                if (ch === ']') {
+                    classMarker = false;
+                }
+            } else {
+                if (ch === '\\') {
+                    ch = source[index++];
+                    // ECMA-262 7.8.5
+                    if (isLineTerminator(ch.charCodeAt(0))) {
+                        throwError({}, Messages.UnterminatedRegExp);
+                    }
+                    str += ch;
+                } else if (ch === '/') {
+                    terminated = true;
+                    break;
+                } else if (ch === '[') {
+                    classMarker = true;
+                } else if (isLineTerminator(ch.charCodeAt(0))) {
+                    throwError({}, Messages.UnterminatedRegExp);
+                }
+            }
+        }
+
+        if (!terminated) {
+            throwError({}, Messages.UnterminatedRegExp);
+        }
+
+        // Exclude leading and trailing slash.
+        pattern = str.substr(1, str.length - 2);
+
+        flags = '';
+        while (index < length) {
+            ch = source[index];
+            if (!isIdentifierPart(ch.charCodeAt(0))) {
+                break;
+            }
+
+            ++index;
+            if (ch === '\\' && index < length) {
+                ch = source[index];
+                if (ch === 'u') {
+                    ++index;
+                    restore = index;
+                    ch = scanHexEscape('u');
+                    /* istanbul ignore else */
+                    if (ch) {
+                        flags += ch;
+                        for (str += '\\u'; restore < index; ++restore) {
+                            str += source[restore];
+                        }
+                    } else {
+                        index = restore;
+                        flags += 'u';
+                        str += '\\u';
+                    }
+                    throwErrorTolerant({}, Messages.UnexpectedToken, 'ILLEGAL');
+                } else {
+                    str += '\\';
+                }
+            } else {
+                flags += ch;
+                str += ch;
+            }
+        }
+
+        tmp = pattern;
         if (flags.indexOf('u') >= 0) {
             // Replace each astral symbol and every Unicode code point
             // escape sequence with a single ASCII symbol to avoid throwing on
@@ -3772,135 +3761,30 @@ process.umask = function() { return 0; };
         // `null` in case the current environment doesn't support the flags it
         // uses.
         try {
-            return new RegExp(pattern, flags);
+            value = new RegExp(pattern, flags);
         } catch (exception) {
-            return null;
+            value = null;
         }
-    }
-
-    function scanRegExpBody() {
-        var ch, str, classMarker, terminated, body;
-
-        ch = source[index];
-        assert(ch === '/', 'Regular expression literal must start with a slash');
-        str = source[index++];
-
-        classMarker = false;
-        terminated = false;
-        while (index < length) {
-            ch = source[index++];
-            str += ch;
-            if (ch === '\\') {
-                ch = source[index++];
-                // ECMA-262 7.8.5
-                if (isLineTerminator(ch.charCodeAt(0))) {
-                    throwError({}, Messages.UnterminatedRegExp);
-                }
-                str += ch;
-            } else if (isLineTerminator(ch.charCodeAt(0))) {
-                throwError({}, Messages.UnterminatedRegExp);
-            } else if (classMarker) {
-                if (ch === ']') {
-                    classMarker = false;
-                }
-            } else {
-                if (ch === '/') {
-                    terminated = true;
-                    break;
-                } else if (ch === '[') {
-                    classMarker = true;
-                }
-            }
-        }
-
-        if (!terminated) {
-            throwError({}, Messages.UnterminatedRegExp);
-        }
-
-        // Exclude leading and trailing slash.
-        body = str.substr(1, str.length - 2);
-        return {
-            value: body,
-            literal: str
-        };
-    }
-
-    function scanRegExpFlags() {
-        var ch, str, flags, restore;
-
-        str = '';
-        flags = '';
-        while (index < length) {
-            ch = source[index];
-            if (!isIdentifierPart(ch.charCodeAt(0))) {
-                break;
-            }
-
-            ++index;
-            if (ch === '\\' && index < length) {
-                ch = source[index];
-                if (ch === 'u') {
-                    ++index;
-                    restore = index;
-                    ch = scanHexEscape('u');
-                    if (ch) {
-                        flags += ch;
-                        for (str += '\\u'; restore < index; ++restore) {
-                            str += source[restore];
-                        }
-                    } else {
-                        index = restore;
-                        flags += 'u';
-                        str += '\\u';
-                    }
-                    throwErrorTolerant({}, Messages.UnexpectedToken, 'ILLEGAL');
-                } else {
-                    str += '\\';
-                    throwErrorTolerant({}, Messages.UnexpectedToken, 'ILLEGAL');
-                }
-            } else {
-                flags += ch;
-                str += ch;
-            }
-        }
-
-        return {
-            value: flags,
-            literal: str
-        };
-    }
-
-    function scanRegExp() {
-        var start, body, flags, value;
-
-        lookahead = null;
-        skipComment();
-        start = index;
-
-        body = scanRegExpBody();
-        flags = scanRegExpFlags();
-        value = testRegExp(body.value, flags.value);
 
         if (extra.tokenize) {
             return {
                 type: Token.RegularExpression,
                 value: value,
                 regex: {
-                    pattern: body.value,
-                    flags: flags.value
+                    pattern: pattern,
+                    flags: flags
                 },
                 lineNumber: lineNumber,
                 lineStart: lineStart,
                 range: [start, index]
             };
         }
-
         return {
-            literal: body.literal + flags.literal,
+            literal: str,
             value: value,
             regex: {
-                pattern: body.value,
-                flags: flags.value
+                pattern: pattern,
+                flags: flags
             },
             range: [start, index]
         };
@@ -3967,7 +3851,7 @@ process.umask = function() { return 0; };
             }
             return scanRegExp();
         }
-        if (prevToken.type === 'Keyword' && prevToken.value !== 'this') {
+        if (prevToken.type === 'Keyword') {
             return scanRegExp();
         }
         return scanPunctuator();
@@ -3976,7 +3860,7 @@ process.umask = function() { return 0; };
     function advance() {
         var ch;
 
-        if (!state.inJSXChild) {
+        if (!state.inXJSChild) {
             skipComment();
         }
 
@@ -3989,8 +3873,8 @@ process.umask = function() { return 0; };
             };
         }
 
-        if (state.inJSXChild) {
-            return advanceJSXChild();
+        if (state.inXJSChild) {
+            return advanceXJSChild();
         }
 
         ch = source.charCodeAt(index);
@@ -4002,14 +3886,14 @@ process.umask = function() { return 0; };
 
         // String literal starts with single quote (#39) or double quote (#34).
         if (ch === 39 || ch === 34) {
-            if (state.inJSXTag) {
-                return scanJSXStringLiteral();
+            if (state.inXJSTag) {
+                return scanXJSStringLiteral();
             }
             return scanStringLiteral();
         }
 
-        if (state.inJSXTag && isJSXIdentifierStart(ch)) {
-            return scanJSXIdentifier();
+        if (state.inXJSTag && isXJSIdentifierStart(ch)) {
+            return scanXJSIdentifier();
         }
 
         if (ch === 96) {
@@ -4620,78 +4504,78 @@ process.umask = function() { return 0; };
             };
         },
 
-        createJSXAttribute: function (name, value) {
+        createXJSAttribute: function (name, value) {
             return {
-                type: Syntax.JSXAttribute,
+                type: Syntax.XJSAttribute,
                 name: name,
                 value: value || null
             };
         },
 
-        createJSXSpreadAttribute: function (argument) {
+        createXJSSpreadAttribute: function (argument) {
             return {
-                type: Syntax.JSXSpreadAttribute,
+                type: Syntax.XJSSpreadAttribute,
                 argument: argument
             };
         },
 
-        createJSXIdentifier: function (name) {
+        createXJSIdentifier: function (name) {
             return {
-                type: Syntax.JSXIdentifier,
+                type: Syntax.XJSIdentifier,
                 name: name
             };
         },
 
-        createJSXNamespacedName: function (namespace, name) {
+        createXJSNamespacedName: function (namespace, name) {
             return {
-                type: Syntax.JSXNamespacedName,
+                type: Syntax.XJSNamespacedName,
                 namespace: namespace,
                 name: name
             };
         },
 
-        createJSXMemberExpression: function (object, property) {
+        createXJSMemberExpression: function (object, property) {
             return {
-                type: Syntax.JSXMemberExpression,
+                type: Syntax.XJSMemberExpression,
                 object: object,
                 property: property
             };
         },
 
-        createJSXElement: function (openingElement, closingElement, children) {
+        createXJSElement: function (openingElement, closingElement, children) {
             return {
-                type: Syntax.JSXElement,
+                type: Syntax.XJSElement,
                 openingElement: openingElement,
                 closingElement: closingElement,
                 children: children
             };
         },
 
-        createJSXEmptyExpression: function () {
+        createXJSEmptyExpression: function () {
             return {
-                type: Syntax.JSXEmptyExpression
+                type: Syntax.XJSEmptyExpression
             };
         },
 
-        createJSXExpressionContainer: function (expression) {
+        createXJSExpressionContainer: function (expression) {
             return {
-                type: Syntax.JSXExpressionContainer,
+                type: Syntax.XJSExpressionContainer,
                 expression: expression
             };
         },
 
-        createJSXOpeningElement: function (name, attributes, selfClosing) {
+        createXJSOpeningElement: function (name, attributes, selfClosing) {
             return {
-                type: Syntax.JSXOpeningElement,
+                type: Syntax.XJSOpeningElement,
                 name: name,
                 selfClosing: selfClosing,
                 attributes: attributes
             };
         },
 
-        createJSXClosingElement: function (name) {
+        createXJSClosingElement: function (name) {
             return {
-                type: Syntax.JSXClosingElement,
+                type: Syntax.XJSClosingElement,
                 name: name
             };
         },
@@ -5032,13 +4916,13 @@ process.umask = function() { return 0; };
             };
         },
 
-        createExportDeclaration: function (isDefault, declaration, specifiers, src) {
+        createExportDeclaration: function (isDefault, declaration, specifiers, source) {
             return {
                 type: Syntax.ExportDeclaration,
                 'default': !!isDefault,
                 declaration: declaration,
                 specifiers: specifiers,
-                source: src
+                source: source
             };
         },
 
@@ -5050,20 +4934,20 @@ process.umask = function() { return 0; };
             };
         },
 
-        createImportDeclaration: function (specifiers, src, isType) {
+        createImportDeclaration: function (specifiers, source, isType) {
             return {
                 type: Syntax.ImportDeclaration,
                 specifiers: specifiers,
-                source: src,
+                source: source,
                 isType: isType
             };
         },
 
-        createYieldExpression: function (argument, dlg) {
+        createYieldExpression: function (argument, delegate) {
             return {
                 type: Syntax.YieldExpression,
                 argument: argument,
-                delegate: dlg
+                delegate: delegate
             };
         },
 
@@ -5109,9 +4993,9 @@ process.umask = function() { return 0; };
             args = Array.prototype.slice.call(arguments, 2),
             msg = messageFormat.replace(
                 /%(\d)/g,
-                function (whole, idx) {
-                    assert(idx < args.length, 'Message reference must be in range');
-                    return args[idx];
+                function (whole, index) {
+                    assert(index < args.length, 'Message reference must be in range');
+                    return args[index];
                 }
             );
 
@@ -5155,7 +5039,7 @@ process.umask = function() { return 0; };
             throwError(token, Messages.UnexpectedNumber);
         }
 
-        if (token.type === Token.StringLiteral || token.type === Token.JSXText) {
+        if (token.type === Token.StringLiteral || token.type === Token.XJSText) {
             throwError(token, Messages.UnexpectedString);
         }
 
@@ -5318,7 +5202,7 @@ process.umask = function() { return 0; };
     // 11.1.4 Array Initialiser
 
     function parseArrayInitialiser() {
-        var elements = [], blocks = [], filter = null, tmp, possiblecomprehension = true,
+        var elements = [], blocks = [], filter = null, tmp, possiblecomprehension = true, body,
             marker = markerCreate();
 
         expect('[');
@@ -5474,7 +5358,7 @@ process.umask = function() { return 0; };
     }
 
     function parseObjectProperty() {
-        var token, key, id, param, computed,
+        var token, key, id, value, param, expr, computed,
             marker = markerCreate(), returnType, typeParameters;
 
         token = lookahead;
@@ -5880,7 +5764,7 @@ process.umask = function() { return 0; };
         }
 
         if (match('<')) {
-            return parseJSXElement();
+            return parseXJSElement();
         }
 
         throwUnexpected(lex());
@@ -6528,7 +6412,9 @@ process.umask = function() { return 0; };
     // 11.14 Comma Operator
 
     function parseExpression() {
-        var marker, expr, expressions, sequence, spreadFound;
+        var marker, expr, expressions, sequence, coverFormalsList, spreadFound, oldParenthesizedCount;
+
+        oldParenthesizedCount = state.parenthesizedCount;
 
         marker = markerCreate();
         expr = parseAssignmentExpression();
@@ -6602,7 +6488,7 @@ process.umask = function() { return 0; };
 
         expect('<');
         while (!match('>')) {
-            paramTypes.push(parseTypeAnnotatableIdentifier());
+            paramTypes.push(parseVariableIdentifier());
             if (!match('>')) {
                 expect(',');
             }
@@ -6706,7 +6592,7 @@ process.umask = function() { return 0; };
 
     function parseObjectType(allowStatic) {
         var callProperties = [], indexers = [], marker, optional = false,
-            properties = [], propertyKey, propertyTypeAnnotation,
+            properties = [], property, propertyKey, propertyTypeAnnotation,
             token, isStatic, matchStatic;
 
         expect('{');
@@ -6770,8 +6656,9 @@ process.umask = function() { return 0; };
     }
 
     function parseGenericType() {
-        var marker = markerCreate(),
-            typeParameters = null, typeIdentifier;
+        var marker = markerCreate(), returnType = null,
+            typeParameters = null, typeIdentifier,
+            typeIdentifierMarker = markerCreate;
 
         typeIdentifier = parseVariableIdentifier();
 
@@ -6861,7 +6748,7 @@ process.umask = function() { return 0; };
     // primary types are kind of like primary expressions...they're the
     // primitives with which other types are constructed.
     function parsePrimaryType() {
-        var params = null, returnType = null,
+        var typeIdentifier = null, params = null, returnType = null,
             marker = markerCreate(), rest = null, tmp,
             typeParameters, token, type, isGroupedType = false;
 
@@ -7107,7 +6994,7 @@ process.umask = function() { return 0; };
 
         if (kind === 'const') {
             if (!match('=')) {
-                throwError({}, Messages.NoUninitializedConst);
+                throwError({}, Messages.NoUnintializedConst);
             }
             expect('=');
             init = parseAssignmentExpression();
@@ -7199,8 +7086,7 @@ process.umask = function() { return 0; };
     }
 
     function parseExportDeclaration() {
-        var declaration = null,
-            possibleIdentifierToken, sourceElement,
+        var backtrackToken, id, previousAllowKeyword, declaration = null,
             isExportFromIdentifier,
             src = null, specifiers = [],
             marker = markerCreate();
@@ -7212,17 +7098,20 @@ process.umask = function() { return 0; };
             // export default ...
             lex();
             if (matchKeyword('function') || matchKeyword('class')) {
-                possibleIdentifierToken = lookahead2();
-                if (isIdentifierName(possibleIdentifierToken)) {
+                backtrackToken = lookahead;
+                lex();
+                if (isIdentifierName(lookahead)) {
                     // covers:
                     // export default function foo () {}
                     // export default class foo {}
-                    sourceElement = parseSourceElement();
-                    return markerApply(marker, delegate.createExportDeclaration(true, sourceElement, [sourceElement.id], null));
+                    id = parseNonComputedProperty();
+                    rewind(backtrackToken);
+                    return markerApply(marker, delegate.createExportDeclaration(true, parseSourceElement(), [id], null));
                 }
                 // covers:
                 // export default function () {}
                 // export default class {}
+                rewind(backtrackToken);
                 switch (lookahead.value) {
                 case 'class':
                     return markerApply(marker, delegate.createExportDeclaration(true, parseClassExpression(), [], null));
@@ -7980,7 +7869,7 @@ process.umask = function() { return 0; };
 
             state.labelSet.set(expr.name, true);
             labeledBody = parseStatement();
-            state.labelSet["delete"](expr.name);
+            state.labelSet['delete'](expr.name);
             return markerApply(marker, delegate.createLabeledStatement(expr, labeledBody));
         }
 
@@ -8381,24 +8270,54 @@ process.umask = function() { return 0; };
         return markerApply(marker, delegate.createAwaitExpression(expr));
     }
 
-    // 14 Functions and classes
+    // 14 Classes
 
-    // 14.1 Functions is defined above (13 in ES5)
-    // 14.2 Arrow Functions Definitions is defined in (7.3 assignments)
+    function validateDuplicateProp(propMap, key, accessor) {
+        var propInfo, reversed, name, isValidDuplicateProp;
 
-    // 14.3 Method Definitions
-    // 14.3.7
-    function specialMethod(methodDefinition) {
-        return methodDefinition.kind === 'get' ||
-               methodDefinition.kind === 'set' ||
-               methodDefinition.value.generator;
+        name = getFieldName(key);
+
+        if (propMap.has(name)) {
+            propInfo = propMap.get(name);
+            if (accessor === 'data') {
+                isValidDuplicateProp = false;
+            } else {
+                if (accessor === 'get') {
+                    reversed = 'set';
+                } else {
+                    reversed = 'get';
+                }
+
+                isValidDuplicateProp =
+                    // There isn't already a specified accessor for this prop
+                    propInfo[accessor] === undefined
+                    // There isn't already a data prop by this name
+                    && propInfo.data === undefined
+                    // The only existing prop by this name is a reversed accessor
+                    && propInfo[reversed] !== undefined;
+            }
+            if (!isValidDuplicateProp) {
+                throwError(key, Messages.IllegalDuplicateClassProperty);
+            }
+        } else {
+            propInfo = {
+                get: undefined,
+                set: undefined,
+                data: undefined
+            };
+            propMap.set(name, propInfo);
+        }
+        propInfo[accessor] = true;
     }
 
-    function parseMethodDefinition(key, isStatic, generator, computed) {
-        var token, param, propType,
-            isAsync, typeParameters, tokenValue, returnType;
+    function parseMethodDefinition(existingPropNames, key, isStatic, generator, computed) {
+        var token, param, propType, isValidDuplicateProp = false,
+            isAsync, typeParameters, tokenValue, returnType,
+            annotationMarker, propMap;
 
         propType = isStatic ? ClassPropertyType["static"] : ClassPropertyType.prototype;
+
+        propMap = existingPropNames[propType];
 
         if (generator) {
             return delegate.createMethodDefinition(
@@ -8415,6 +8334,12 @@ process.umask = function() { return 0; };
         if (tokenValue === 'get' && !match('(')) {
             key = parseObjectPropertyKey();
 
+            // It is a syntax error if any other properties have a name
+            // duplicating this one unless they are a setter
+            if (!computed) {
+                validateDuplicateProp(propMap, key, 'get');
+            }
+
             expect('(');
             expect(')');
             if (match(':')) {
@@ -8430,6 +8355,12 @@ process.umask = function() { return 0; };
         }
         if (tokenValue === 'set' && !match('(')) {
             key = parseObjectPropertyKey();
+
+            // It is a syntax error if any other properties have a name
+            // duplicating this one unless they are a getter
+            if (!computed) {
+                validateDuplicateProp(propMap, key, 'set');
+            }
 
             expect('(');
             token = lookahead;
@@ -8461,6 +8392,12 @@ process.umask = function() { return 0; };
             key = parseObjectPropertyKey();
         }
 
+        // It is a syntax error if any other properties have the same name as a
+        // non-getter, non-setter method
+        if (!computed) {
+            validateDuplicateProp(propMap, key, 'data');
+        }
+
         return delegate.createMethodDefinition(
             propType,
             '',
@@ -8474,7 +8411,7 @@ process.umask = function() { return 0; };
         );
     }
 
-    function parseClassProperty(key, computed, isStatic) {
+    function parseClassProperty(existingPropNames, key, computed, isStatic) {
         var typeAnnotation;
 
         typeAnnotation = parseTypeAnnotation();
@@ -8488,12 +8425,12 @@ process.umask = function() { return 0; };
         );
     }
 
-    function parseClassElement() {
+    function parseClassElement(existingProps) {
         var computed = false, generator = false, key, marker = markerCreate(),
             isStatic = false, possiblyOpenBracketToken;
         if (match(';')) {
             lex();
-            return undefined;
+            return;
         }
 
         if (lookahead.value === 'static') {
@@ -8519,10 +8456,11 @@ process.umask = function() { return 0; };
         key = parseObjectPropertyKey();
 
         if (!generator && lookahead.value === ':') {
-            return markerApply(marker, parseClassProperty(key, computed, isStatic));
+            return markerApply(marker, parseClassProperty(existingProps, key, computed, isStatic));
         }
 
         return markerApply(marker, parseMethodDefinition(
+            existingProps,
             key,
             isStatic,
             generator,
@@ -8531,8 +8469,7 @@ process.umask = function() { return 0; };
     }
 
     function parseClassBody() {
-        var classElement, classElements = [], existingProps = {},
-            marker = markerCreate(), propName, propType;
+        var classElement, classElements = [], existingProps = {}, marker = markerCreate();
 
         existingProps[ClassPropertyType["static"]] = new StringMap();
         existingProps[ClassPropertyType.prototype] = new StringMap();
@@ -8547,25 +8484,6 @@ process.umask = function() { return 0; };
 
             if (typeof classElement !== 'undefined') {
                 classElements.push(classElement);
-
-                propName = !classElement.computed && getFieldName(classElement.key);
-                if (propName !== false) {
-                    propType = classElement["static"] ?
-                                ClassPropertyType["static"] :
-                                ClassPropertyType.prototype;
-
-                    if (classElement.type === Syntax.MethodDefinition) {
-                        if (propName === 'constructor' && !classElement["static"]) {
-                            if (specialMethod(classElement)) {
-                                throwError(classElement, Messages.IllegalClassConstructorProperty);
-                            }
-                            if (existingProps[ClassPropertyType.prototype].has('constructor')) {
-                                throwError(classElement.key, Messages.IllegalDuplicateClassProperty);
-                            }
-                        }
-                        existingProps[propType].set(propName, true);
-                    }
-                }
             }
         }
 
@@ -8803,7 +8721,164 @@ process.umask = function() { return 0; };
         return markerApply(marker, delegate.createProgram(body));
     }
 
-    // 16 JSX
+    // The following functions are needed only when the option to preserve
+    // the comments is active.
+
+    function addComment(type, value, start, end, loc) {
+        var comment;
+
+        assert(typeof start === 'number', 'Comment must have valid position');
+
+        // Because the way the actual token is scanned, often the comments
+        // (if any) are skipped twice during the lexical analysis.
+        // Thus, we need to skip adding a comment if the comment array already
+        // handled it.
+        if (state.lastCommentStart >= start) {
+            return;
+        }
+        state.lastCommentStart = start;
+
+        comment = {
+            type: type,
+            value: value
+        };
+        if (extra.range) {
+            comment.range = [start, end];
+        }
+        if (extra.loc) {
+            comment.loc = loc;
+        }
+        extra.comments.push(comment);
+        if (extra.attachComment) {
+            extra.leadingComments.push(comment);
+            extra.trailingComments.push(comment);
+        }
+    }
+
+    function scanComment() {
+        var comment, ch, loc, start, blockComment, lineComment;
+
+        comment = '';
+        blockComment = false;
+        lineComment = false;
+
+        while (index < length) {
+            ch = source[index];
+
+            if (lineComment) {
+                ch = source[index++];
+                if (isLineTerminator(ch.charCodeAt(0))) {
+                    loc.end = {
+                        line: lineNumber,
+                        column: index - lineStart - 1
+                    };
+                    lineComment = false;
+                    addComment('Line', comment, start, index - 1, loc);
+                    if (ch === '\r' && source[index] === '\n') {
+                        ++index;
+                    }
+                    ++lineNumber;
+                    lineStart = index;
+                    comment = '';
+                } else if (index >= length) {
+                    lineComment = false;
+                    comment += ch;
+                    loc.end = {
+                        line: lineNumber,
+                        column: length - lineStart
+                    };
+                    addComment('Line', comment, start, length, loc);
+                } else {
+                    comment += ch;
+                }
+            } else if (blockComment) {
+                if (isLineTerminator(ch.charCodeAt(0))) {
+                    if (ch === '\r') {
+                        ++index;
+                        comment += '\r';
+                    }
+                    if (ch !== '\r' || source[index] === '\n') {
+                        comment += source[index];
+                        ++lineNumber;
+                        ++index;
+                        lineStart = index;
+                        if (index >= length) {
+                            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                        }
+                    }
+                } else {
+                    ch = source[index++];
+                    if (index >= length) {
+                        throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                    }
+                    comment += ch;
+                    if (ch === '*') {
+                        ch = source[index];
+                        if (ch === '/') {
+                            comment = comment.substr(0, comment.length - 1);
+                            blockComment = false;
+                            ++index;
+                            loc.end = {
+                                line: lineNumber,
+                                column: index - lineStart
+                            };
+                            addComment('Block', comment, start, index, loc);
+                            comment = '';
+                        }
+                    }
+                }
+            } else if (ch === '/') {
+                ch = source[index + 1];
+                if (ch === '/') {
+                    loc = {
+                        start: {
+                            line: lineNumber,
+                            column: index - lineStart
+                        }
+                    };
+                    start = index;
+                    index += 2;
+                    lineComment = true;
+                    if (index >= length) {
+                        loc.end = {
+                            line: lineNumber,
+                            column: index - lineStart
+                        };
+                        lineComment = false;
+                        addComment('Line', comment, start, index, loc);
+                    }
+                } else if (ch === '*') {
+                    start = index;
+                    index += 2;
+                    blockComment = true;
+                    loc = {
+                        start: {
+                            line: lineNumber,
+                            column: index - lineStart - 2
+                        }
+                    };
+                    if (index >= length) {
+                        throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                    }
+                } else {
+                    break;
+                }
+            } else if (isWhiteSpace(ch.charCodeAt(0))) {
+                ++index;
+            } else if (isLineTerminator(ch.charCodeAt(0))) {
+                ++index;
+                if (ch ===  '\r' && source[index] === '\n') {
+                    ++index;
+                }
+                ++lineNumber;
+                lineStart = index;
+            } else {
+                break;
+            }
+        }
+    }
+
+    // 16 XJS
 
     XHTMLEntities = {
         quot: '\u0022',
@@ -9061,48 +9136,48 @@ process.umask = function() { return 0; };
         diams: '\u2666'
     };
 
-    function getQualifiedJSXName(object) {
-        if (object.type === Syntax.JSXIdentifier) {
+    function getQualifiedXJSName(object) {
+        if (object.type === Syntax.XJSIdentifier) {
             return object.name;
         }
-        if (object.type === Syntax.JSXNamespacedName) {
+        if (object.type === Syntax.XJSNamespacedName) {
             return object.namespace.name + ':' + object.name.name;
         }
         /* istanbul ignore else */
-        if (object.type === Syntax.JSXMemberExpression) {
+        if (object.type === Syntax.XJSMemberExpression) {
             return (
-                getQualifiedJSXName(object.object) + '.' +
-                getQualifiedJSXName(object.property)
+                getQualifiedXJSName(object.object) + '.' +
+                getQualifiedXJSName(object.property)
             );
         }
         /* istanbul ignore next */
         throwUnexpected(object);
     }
 
-    function isJSXIdentifierStart(ch) {
+    function isXJSIdentifierStart(ch) {
         // exclude backslash (\)
         return (ch !== 92) && isIdentifierStart(ch);
     }
 
-    function isJSXIdentifierPart(ch) {
+    function isXJSIdentifierPart(ch) {
         // exclude backslash (\) and add hyphen (-)
         return (ch !== 92) && (ch === 45 || isIdentifierPart(ch));
     }
 
-    function scanJSXIdentifier() {
+    function scanXJSIdentifier() {
         var ch, start, value = '';
 
         start = index;
         while (index < length) {
             ch = source.charCodeAt(index);
-            if (!isJSXIdentifierPart(ch)) {
+            if (!isXJSIdentifierPart(ch)) {
                 break;
             }
             value += source[index++];
         }
 
         return {
-            type: Token.JSXIdentifier,
+            type: Token.XJSIdentifier,
             value: value,
             lineNumber: lineNumber,
             lineStart: lineStart,
@@ -9110,7 +9185,7 @@ process.umask = function() { return 0; };
         };
     }
 
-    function scanJSXEntity() {
+    function scanXJSEntity() {
         var ch, str = '', start = index, count = 0, code;
         ch = source[index];
         assert(ch === '&', 'Entity must start with an ampersand');
@@ -9148,7 +9223,7 @@ process.umask = function() { return 0; };
         return '&';
     }
 
-    function scanJSXText(stopChars) {
+    function scanXJSText(stopChars) {
         var ch, str = '', start;
         start = index;
         while (index < length) {
@@ -9157,7 +9232,7 @@ process.umask = function() { return 0; };
                 break;
             }
             if (ch === '&') {
-                str += scanJSXEntity();
+                str += scanXJSEntity();
             } else {
                 index++;
                 if (ch === '\r' && source[index] === '\n') {
@@ -9173,7 +9248,7 @@ process.umask = function() { return 0; };
             }
         }
         return {
-            type: Token.JSXText,
+            type: Token.XJSText,
             value: str,
             lineNumber: lineNumber,
             lineStart: lineStart,
@@ -9181,7 +9256,7 @@ process.umask = function() { return 0; };
         };
     }
 
-    function scanJSXStringLiteral() {
+    function scanXJSStringLiteral() {
         var innerToken, quote, start;
 
         quote = source[index];
@@ -9191,7 +9266,7 @@ process.umask = function() { return 0; };
         start = index;
         ++index;
 
-        innerToken = scanJSXText([quote]);
+        innerToken = scanXJSText([quote]);
 
         if (quote !== source[index]) {
             throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
@@ -9205,256 +9280,256 @@ process.umask = function() { return 0; };
     }
 
     /**
-     * Between JSX opening and closing tags (e.g. <foo>HERE</foo>), anything that
-     * is not another JSX tag and is not an expression wrapped by {} is text.
+     * Between XJS opening and closing tags (e.g. <foo>HERE</foo>), anything that
+     * is not another XJS tag and is not an expression wrapped by {} is text.
      */
-    function advanceJSXChild() {
+    function advanceXJSChild() {
         var ch = source.charCodeAt(index);
 
         // '<' 60, '>' 62, '{' 123, '}' 125
         if (ch !== 60 && ch !== 62 && ch !== 123 && ch !== 125) {
-            return scanJSXText(['<', '>', '{', '}']);
+            return scanXJSText(['<', '>', '{', '}']);
         }
 
         return scanPunctuator();
     }
 
-    function parseJSXIdentifier() {
+    function parseXJSIdentifier() {
         var token, marker = markerCreate();
 
-        if (lookahead.type !== Token.JSXIdentifier) {
+        if (lookahead.type !== Token.XJSIdentifier) {
             throwUnexpected(lookahead);
         }
 
         token = lex();
-        return markerApply(marker, delegate.createJSXIdentifier(token.value));
+        return markerApply(marker, delegate.createXJSIdentifier(token.value));
     }
 
-    function parseJSXNamespacedName() {
+    function parseXJSNamespacedName() {
         var namespace, name, marker = markerCreate();
 
-        namespace = parseJSXIdentifier();
+        namespace = parseXJSIdentifier();
         expect(':');
-        name = parseJSXIdentifier();
+        name = parseXJSIdentifier();
 
-        return markerApply(marker, delegate.createJSXNamespacedName(namespace, name));
+        return markerApply(marker, delegate.createXJSNamespacedName(namespace, name));
     }
 
-    function parseJSXMemberExpression() {
+    function parseXJSMemberExpression() {
         var marker = markerCreate(),
-            expr = parseJSXIdentifier();
+            expr = parseXJSIdentifier();
 
         while (match('.')) {
             lex();
-            expr = markerApply(marker, delegate.createJSXMemberExpression(expr, parseJSXIdentifier()));
+            expr = markerApply(marker, delegate.createXJSMemberExpression(expr, parseXJSIdentifier()));
         }
 
         return expr;
     }
 
-    function parseJSXElementName() {
+    function parseXJSElementName() {
         if (lookahead2().value === ':') {
-            return parseJSXNamespacedName();
+            return parseXJSNamespacedName();
         }
         if (lookahead2().value === '.') {
-            return parseJSXMemberExpression();
+            return parseXJSMemberExpression();
         }
 
-        return parseJSXIdentifier();
+        return parseXJSIdentifier();
     }
 
-    function parseJSXAttributeName() {
+    function parseXJSAttributeName() {
         if (lookahead2().value === ':') {
-            return parseJSXNamespacedName();
+            return parseXJSNamespacedName();
         }
 
-        return parseJSXIdentifier();
+        return parseXJSIdentifier();
     }
 
-    function parseJSXAttributeValue() {
+    function parseXJSAttributeValue() {
         var value, marker;
         if (match('{')) {
-            value = parseJSXExpressionContainer();
-            if (value.expression.type === Syntax.JSXEmptyExpression) {
+            value = parseXJSExpressionContainer();
+            if (value.expression.type === Syntax.XJSEmptyExpression) {
                 throwError(
                     value,
-                    'JSX attributes must only be assigned a non-empty ' +
+                    'XJS attributes must only be assigned a non-empty ' +
                         'expression'
                 );
             }
         } else if (match('<')) {
-            value = parseJSXElement();
-        } else if (lookahead.type === Token.JSXText) {
+            value = parseXJSElement();
+        } else if (lookahead.type === Token.XJSText) {
             marker = markerCreate();
             value = markerApply(marker, delegate.createLiteral(lex()));
         } else {
-            throwError({}, Messages.InvalidJSXAttributeValue);
+            throwError({}, Messages.InvalidXJSAttributeValue);
         }
         return value;
     }
 
-    function parseJSXEmptyExpression() {
+    function parseXJSEmptyExpression() {
         var marker = markerCreatePreserveWhitespace();
         while (source.charAt(index) !== '}') {
             index++;
         }
-        return markerApply(marker, delegate.createJSXEmptyExpression());
+        return markerApply(marker, delegate.createXJSEmptyExpression());
     }
 
-    function parseJSXExpressionContainer() {
-        var expression, origInJSXChild, origInJSXTag, marker = markerCreate();
+    function parseXJSExpressionContainer() {
+        var expression, origInXJSChild, origInXJSTag, marker = markerCreate();
 
-        origInJSXChild = state.inJSXChild;
-        origInJSXTag = state.inJSXTag;
-        state.inJSXChild = false;
-        state.inJSXTag = false;
+        origInXJSChild = state.inXJSChild;
+        origInXJSTag = state.inXJSTag;
+        state.inXJSChild = false;
+        state.inXJSTag = false;
 
         expect('{');
 
         if (match('}')) {
-            expression = parseJSXEmptyExpression();
+            expression = parseXJSEmptyExpression();
         } else {
             expression = parseExpression();
         }
 
-        state.inJSXChild = origInJSXChild;
-        state.inJSXTag = origInJSXTag;
+        state.inXJSChild = origInXJSChild;
+        state.inXJSTag = origInXJSTag;
 
         expect('}');
 
-        return markerApply(marker, delegate.createJSXExpressionContainer(expression));
+        return markerApply(marker, delegate.createXJSExpressionContainer(expression));
     }
 
-    function parseJSXSpreadAttribute() {
-        var expression, origInJSXChild, origInJSXTag, marker = markerCreate();
+    function parseXJSSpreadAttribute() {
+        var expression, origInXJSChild, origInXJSTag, marker = markerCreate();
 
-        origInJSXChild = state.inJSXChild;
-        origInJSXTag = state.inJSXTag;
-        state.inJSXChild = false;
-        state.inJSXTag = false;
+        origInXJSChild = state.inXJSChild;
+        origInXJSTag = state.inXJSTag;
+        state.inXJSChild = false;
+        state.inXJSTag = false;
 
         expect('{');
         expect('...');
 
         expression = parseAssignmentExpression();
 
-        state.inJSXChild = origInJSXChild;
-        state.inJSXTag = origInJSXTag;
+        state.inXJSChild = origInXJSChild;
+        state.inXJSTag = origInXJSTag;
 
         expect('}');
 
-        return markerApply(marker, delegate.createJSXSpreadAttribute(expression));
+        return markerApply(marker, delegate.createXJSSpreadAttribute(expression));
     }
 
-    function parseJSXAttribute() {
+    function parseXJSAttribute() {
         var name, marker;
 
         if (match('{')) {
-            return parseJSXSpreadAttribute();
+            return parseXJSSpreadAttribute();
         }
 
         marker = markerCreate();
 
-        name = parseJSXAttributeName();
+        name = parseXJSAttributeName();
 
         // HTML empty attribute
         if (match('=')) {
             lex();
-            return markerApply(marker, delegate.createJSXAttribute(name, parseJSXAttributeValue()));
+            return markerApply(marker, delegate.createXJSAttribute(name, parseXJSAttributeValue()));
         }
 
-        return markerApply(marker, delegate.createJSXAttribute(name));
+        return markerApply(marker, delegate.createXJSAttribute(name));
     }
 
-    function parseJSXChild() {
+    function parseXJSChild() {
         var token, marker;
         if (match('{')) {
-            token = parseJSXExpressionContainer();
-        } else if (lookahead.type === Token.JSXText) {
+            token = parseXJSExpressionContainer();
+        } else if (lookahead.type === Token.XJSText) {
             marker = markerCreatePreserveWhitespace();
             token = markerApply(marker, delegate.createLiteral(lex()));
         } else if (match('<')) {
-            token = parseJSXElement();
+            token = parseXJSElement();
         } else {
             throwUnexpected(lookahead);
         }
         return token;
     }
 
-    function parseJSXClosingElement() {
-        var name, origInJSXChild, origInJSXTag, marker = markerCreate();
-        origInJSXChild = state.inJSXChild;
-        origInJSXTag = state.inJSXTag;
-        state.inJSXChild = false;
-        state.inJSXTag = true;
+    function parseXJSClosingElement() {
+        var name, origInXJSChild, origInXJSTag, marker = markerCreate();
+        origInXJSChild = state.inXJSChild;
+        origInXJSTag = state.inXJSTag;
+        state.inXJSChild = false;
+        state.inXJSTag = true;
         expect('<');
         expect('/');
-        name = parseJSXElementName();
+        name = parseXJSElementName();
         // Because advance() (called by lex() called by expect()) expects there
         // to be a valid token after >, it needs to know whether to look for a
-        // standard JS token or an JSX text node
-        state.inJSXChild = origInJSXChild;
-        state.inJSXTag = origInJSXTag;
+        // standard JS token or an XJS text node
+        state.inXJSChild = origInXJSChild;
+        state.inXJSTag = origInXJSTag;
         expect('>');
-        return markerApply(marker, delegate.createJSXClosingElement(name));
+        return markerApply(marker, delegate.createXJSClosingElement(name));
     }
 
-    function parseJSXOpeningElement() {
-        var name, attributes = [], selfClosing = false, origInJSXChild, origInJSXTag, marker = markerCreate();
+    function parseXJSOpeningElement() {
+        var name, attribute, attributes = [], selfClosing = false, origInXJSChild, origInXJSTag, marker = markerCreate();
 
-        origInJSXChild = state.inJSXChild;
-        origInJSXTag = state.inJSXTag;
-        state.inJSXChild = false;
-        state.inJSXTag = true;
+        origInXJSChild = state.inXJSChild;
+        origInXJSTag = state.inXJSTag;
+        state.inXJSChild = false;
+        state.inXJSTag = true;
 
         expect('<');
 
-        name = parseJSXElementName();
+        name = parseXJSElementName();
 
         while (index < length &&
                 lookahead.value !== '/' &&
                 lookahead.value !== '>') {
-            attributes.push(parseJSXAttribute());
+            attributes.push(parseXJSAttribute());
         }
 
-        state.inJSXTag = origInJSXTag;
+        state.inXJSTag = origInXJSTag;
 
         if (lookahead.value === '/') {
             expect('/');
             // Because advance() (called by lex() called by expect()) expects
             // there to be a valid token after >, it needs to know whether to
-            // look for a standard JS token or an JSX text node
-            state.inJSXChild = origInJSXChild;
+            // look for a standard JS token or an XJS text node
+            state.inXJSChild = origInXJSChild;
             expect('>');
             selfClosing = true;
         } else {
-            state.inJSXChild = true;
+            state.inXJSChild = true;
             expect('>');
         }
-        return markerApply(marker, delegate.createJSXOpeningElement(name, attributes, selfClosing));
+        return markerApply(marker, delegate.createXJSOpeningElement(name, attributes, selfClosing));
     }
 
-    function parseJSXElement() {
-        var openingElement, closingElement = null, children = [], origInJSXChild, origInJSXTag, marker = markerCreate();
+    function parseXJSElement() {
+        var openingElement, closingElement = null, children = [], origInXJSChild, origInXJSTag, marker = markerCreate();
 
-        origInJSXChild = state.inJSXChild;
-        origInJSXTag = state.inJSXTag;
-        openingElement = parseJSXOpeningElement();
+        origInXJSChild = state.inXJSChild;
+        origInXJSTag = state.inXJSTag;
+        openingElement = parseXJSOpeningElement();
 
         if (!openingElement.selfClosing) {
             while (index < length) {
-                state.inJSXChild = false; // Call lookahead2() with inJSXChild = false because </ should not be considered in the child
+                state.inXJSChild = false; // Call lookahead2() with inXJSChild = false because </ should not be considered in the child
                 if (lookahead.value === '<' && lookahead2().value === '/') {
                     break;
                 }
-                state.inJSXChild = true;
-                children.push(parseJSXChild());
+                state.inXJSChild = true;
+                children.push(parseXJSChild());
             }
-            state.inJSXChild = origInJSXChild;
-            state.inJSXTag = origInJSXTag;
-            closingElement = parseJSXClosingElement();
-            if (getQualifiedJSXName(closingElement.name) !== getQualifiedJSXName(openingElement.name)) {
-                throwError({}, Messages.ExpectedJSXClosingTag, getQualifiedJSXName(openingElement.name));
+            state.inXJSChild = origInXJSChild;
+            state.inXJSTag = origInXJSTag;
+            closingElement = parseXJSClosingElement();
+            if (getQualifiedXJSName(closingElement.name) !== getQualifiedXJSName(openingElement.name)) {
+                throwError({}, Messages.ExpectedXJSClosingTag, getQualifiedXJSName(openingElement.name));
             }
         }
 
@@ -9463,15 +9538,15 @@ process.umask = function() { return 0; };
         //     var x = <div>one</div><div>two</div>;
         //
         // the default error message is a bit incomprehensible. Since it's
-        // rarely (never?) useful to write a less-than sign after an JSX
+        // rarely (never?) useful to write a less-than sign after an XJS
         // element, we disallow it here in the parser in order to provide a
         // better error message. (In the rare case that the less-than operator
         // was intended, the left tag can be wrapped in parentheses.)
-        if (!origInJSXChild && match('<')) {
-            throwError(lookahead, Messages.AdjacentJSXElements);
+        if (!origInXJSChild && match('<')) {
+            throwError(lookahead, Messages.AdjacentXJSElements);
         }
 
-        return markerApply(marker, delegate.createJSXElement(openingElement, closingElement, children));
+        return markerApply(marker, delegate.createXJSElement(openingElement, closingElement, children));
     }
 
     function parseTypeAlias() {
@@ -9534,7 +9609,8 @@ process.umask = function() { return 0; };
     }
 
     function parseInterface() {
-        var marker = markerCreate();
+        var body, bodyMarker, extended = [], id, marker = markerCreate(),
+            typeParameters = null, previousStrict;
 
         if (strict) {
             expectKeyword('interface');
@@ -9652,13 +9728,14 @@ process.umask = function() { return 0; };
     }
 
     function collectToken() {
-        var loc, token, range, value, entry;
+        var start, loc, token, range, value, entry;
 
         /* istanbul ignore else */
-        if (!state.inJSXChild) {
+        if (!state.inXJSChild) {
             skipComment();
         }
 
+        start = index;
         loc = {
             start: {
                 line: lineNumber,
@@ -9764,6 +9841,11 @@ process.umask = function() { return 0; };
     }
 
     function patch() {
+        if (extra.comments) {
+            extra.skipComment = skipComment;
+            skipComment = scanComment;
+        }
+
         if (typeof extra.tokens !== 'undefined') {
             extra.advance = advance;
             extra.scanRegExp = scanRegExp;
@@ -9774,6 +9856,10 @@ process.umask = function() { return 0; };
     }
 
     function unpatch() {
+        if (typeof extra.skipComment === 'function') {
+            skipComment = extra.skipComment;
+        }
+
         if (typeof extra.scanRegExp === 'function') {
             advance = extra.advance;
             scanRegExp = extra.scanRegExp;
@@ -9917,8 +10003,8 @@ process.umask = function() { return 0; };
             inFunctionBody: false,
             inIteration: false,
             inSwitch: false,
-            inJSXChild: false,
-            inJSXTag: false,
+            inXJSChild: false,
+            inXJSTag: false,
             inType: false,
             lastCommentStart: -1,
             yieldAllowed: false,
@@ -9983,7 +10069,7 @@ process.umask = function() { return 0; };
     }
 
     // Sync with *.json manifests.
-    exports.version = '13001.1001.0-dev-harmony-fb';
+    exports.version = '12001.1.0-dev-harmony-fb';
 
     exports.tokenize = tokenize;
 
@@ -15039,33 +15125,8 @@ RESERVED_WORDS.forEach(function(k) {
     reservedWordsMap[k] = true;
 });
 
-/**
- * This list should not grow as new reserved words are introdued. This list is
- * of words that need to be quoted because ES3-ish browsers do not allow their
- * use as identifier names.
- */
-var ES3_FUTURE_RESERVED_WORDS = [
-  'enum', 'implements', 'package', 'protected', 'static', 'interface',
-  'private', 'public'
-];
-
-var ES3_RESERVED_WORDS = [].concat(
-  KEYWORDS,
-  ES3_FUTURE_RESERVED_WORDS,
-  LITERALS
-);
-
-var es3ReservedWordsMap = Object.create(null);
-ES3_RESERVED_WORDS.forEach(function(k) {
-    es3ReservedWordsMap[k] = true;
-});
-
 exports.isReservedWord = function(word) {
   return !!reservedWordsMap[word];
-};
-
-exports.isES3ReservedWord = function(word) {
-  return !!es3ReservedWordsMap[word];
 };
 
 },{}],35:[function(_dereq_,module,exports){
@@ -15113,7 +15174,7 @@ visitProperty.test = function(node) {
     !node.method &&
     !node.shorthand &&
     !node.computed &&
-    reserverdWordsHelper.isES3ReservedWord(node.key.name);
+    reserverdWordsHelper.isReservedWord(node.key.name);
 };
 
 function visitMemberExpression(traverse, node, path, state) {
@@ -15130,7 +15191,7 @@ function visitMemberExpression(traverse, node, path, state) {
 visitMemberExpression.test = function(node) {
   return node.type === Syntax.MemberExpression &&
     node.property.type === Syntax.Identifier &&
-    reserverdWordsHelper.isES3ReservedWord(node.property.name);
+    reserverdWordsHelper.isReservedWord(node.property.name);
 };
 
 exports.visitorList = [
@@ -15168,10 +15229,6 @@ visitTypeAlias.test = function(node, path, state) {
 };
 
 function visitTypeCast(traverse, node, path, state) {
-  path.unshift(node);
-  traverse(node.expression, path, state);
-  path.shift();
-
   utils.catchup(node.typeAnnotation.range[0], state);
   utils.catchupWhiteOut(node.typeAnnotation.range[1], state);
   return false;
@@ -15323,129 +15380,16 @@ exports.visitorList = [
  */
 /*global exports:true*/
 'use strict';
-var Syntax = _dereq_('jstransform').Syntax;
-var utils = _dereq_('jstransform/src/utils');
-
-function renderJSXLiteral(object, isLast, state, start, end) {
-  var lines = object.value.split(/\r\n|\n|\r/);
-
-  if (start) {
-    utils.append(start, state);
-  }
-
-  var lastNonEmptyLine = 0;
-
-  lines.forEach(function(line, index) {
-    if (line.match(/[^ \t]/)) {
-      lastNonEmptyLine = index;
-    }
-  });
-
-  lines.forEach(function(line, index) {
-    var isFirstLine = index === 0;
-    var isLastLine = index === lines.length - 1;
-    var isLastNonEmptyLine = index === lastNonEmptyLine;
-
-    // replace rendered whitespace tabs with spaces
-    var trimmedLine = line.replace(/\t/g, ' ');
-
-    // trim whitespace touching a newline
-    if (!isFirstLine) {
-      trimmedLine = trimmedLine.replace(/^[ ]+/, '');
-    }
-    if (!isLastLine) {
-      trimmedLine = trimmedLine.replace(/[ ]+$/, '');
-    }
-
-    if (!isFirstLine) {
-      utils.append(line.match(/^[ \t]*/)[0], state);
-    }
-
-    if (trimmedLine || isLastNonEmptyLine) {
-      utils.append(
-        JSON.stringify(trimmedLine) +
-        (!isLastNonEmptyLine ? ' + \' \' +' : ''),
-        state);
-
-      if (isLastNonEmptyLine) {
-        if (end) {
-          utils.append(end, state);
-        }
-        if (!isLast) {
-          utils.append(', ', state);
-        }
-      }
-
-      // only restore tail whitespace if line had literals
-      if (trimmedLine && !isLastLine) {
-        utils.append(line.match(/[ \t]*$/)[0], state);
-      }
-    }
-
-    if (!isLastLine) {
-      utils.append('\n', state);
-    }
-  });
-
-  utils.move(object.range[1], state);
-}
-
-function renderJSXExpressionContainer(traverse, object, isLast, path, state) {
-  // Plus 1 to skip `{`.
-  utils.move(object.range[0] + 1, state);
-  utils.catchup(object.expression.range[0], state);
-  traverse(object.expression, path, state);
-
-  if (!isLast && object.expression.type !== Syntax.JSXEmptyExpression) {
-    // If we need to append a comma, make sure to do so after the expression.
-    utils.catchup(object.expression.range[1], state, trimLeft);
-    utils.append(', ', state);
-  }
-
-  // Minus 1 to skip `}`.
-  utils.catchup(object.range[1] - 1, state, trimLeft);
-  utils.move(object.range[1], state);
-  return false;
-}
-
-function quoteAttrName(attr) {
-  // Quote invalid JS identifiers.
-  if (!/^[a-z_$][a-z\d_$]*$/i.test(attr)) {
-    return '"' + attr + '"';
-  }
-  return attr;
-}
-
-function trimLeft(value) {
-  return value.replace(/^[ ]+/, '');
-}
-
-exports.renderJSXExpressionContainer = renderJSXExpressionContainer;
-exports.renderJSXLiteral = renderJSXLiteral;
-exports.quoteAttrName = quoteAttrName;
-exports.trimLeft = trimLeft;
-
-},{"jstransform":22,"jstransform/src/utils":23}],38:[function(_dereq_,module,exports){
-/**
- * Copyright 2013-2015, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-/*global exports:true*/
-'use strict';
 
 var Syntax = _dereq_('jstransform').Syntax;
 var utils = _dereq_('jstransform/src/utils');
 
-var renderJSXExpressionContainer =
-  _dereq_('./jsx').renderJSXExpressionContainer;
-var renderJSXLiteral = _dereq_('./jsx').renderJSXLiteral;
-var quoteAttrName = _dereq_('./jsx').quoteAttrName;
+var renderXJSExpressionContainer =
+  _dereq_('./xjs').renderXJSExpressionContainer;
+var renderXJSLiteral = _dereq_('./xjs').renderXJSLiteral;
+var quoteAttrName = _dereq_('./xjs').quoteAttrName;
 
-var trimLeft = _dereq_('./jsx').trimLeft;
+var trimLeft = _dereq_('./xjs').trimLeft;
 
 /**
  * Customized desugar processor for React JSX. Currently:
@@ -15478,20 +15422,20 @@ function visitReactTag(traverse, object, path, state) {
 
   utils.catchup(openingElement.range[0], state, trimLeft);
 
-  if (nameObject.type === Syntax.JSXNamespacedName && nameObject.namespace) {
+  if (nameObject.type === Syntax.XJSNamespacedName && nameObject.namespace) {
     throw new Error('Namespace tags are not supported. ReactJSX is not XML.');
   }
 
   // We assume that the React runtime is already in scope
   utils.append('React.createElement(', state);
 
-  if (nameObject.type === Syntax.JSXIdentifier && isTagName(nameObject.name)) {
+  if (nameObject.type === Syntax.XJSIdentifier && isTagName(nameObject.name)) {
     utils.append('"' + nameObject.name + '"', state);
     utils.move(nameObject.range[1], state);
   } else {
     // Use utils.catchup in this case so we can easily handle
-    // JSXMemberExpressions which look like Foo.Bar.Baz. This also handles
-    // JSXIdentifiers that aren't fallback tags.
+    // XJSMemberExpressions which look like Foo.Bar.Baz. This also handles
+    // XJSIdentifiers that aren't fallback tags.
     utils.move(nameObject.range[0], state);
     utils.catchup(nameObject.range[1], state);
   }
@@ -15501,7 +15445,7 @@ function visitReactTag(traverse, object, path, state) {
   var hasAttributes = attributesObject.length;
 
   var hasAtLeastOneSpreadProperty = attributesObject.some(function(attr) {
-    return attr.type === Syntax.JSXSpreadAttribute;
+    return attr.type === Syntax.XJSSpreadAttribute;
   });
 
   // if we don't have any attributes, pass in null
@@ -15520,7 +15464,7 @@ function visitReactTag(traverse, object, path, state) {
   attributesObject.forEach(function(attr, index) {
     var isLast = index === attributesObject.length - 1;
 
-    if (attr.type === Syntax.JSXSpreadAttribute) {
+    if (attr.type === Syntax.XJSSpreadAttribute) {
       // Close the previous object or initial object
       if (!previousWasSpread) {
         utils.append('}, ', state);
@@ -15553,7 +15497,7 @@ function visitReactTag(traverse, object, path, state) {
 
     // If the next attribute is a spread, we're effective last in this object
     if (!isLast) {
-      isLast = attributesObject[index + 1].type === Syntax.JSXSpreadAttribute;
+      isLast = attributesObject[index + 1].type === Syntax.XJSSpreadAttribute;
     }
 
     if (attr.name.namespace) {
@@ -15582,9 +15526,9 @@ function visitReactTag(traverse, object, path, state) {
       // Use catchupNewlines to skip over the '=' in the attribute
       utils.catchupNewlines(attr.value.range[0], state);
       if (attr.value.type === Syntax.Literal) {
-        renderJSXLiteral(attr.value, isLast, state);
+        renderXJSLiteral(attr.value, isLast, state);
       } else {
-        renderJSXExpressionContainer(traverse, attr.value, isLast, path, state);
+        renderXJSExpressionContainer(traverse, attr.value, isLast, path, state);
       }
     }
 
@@ -15617,8 +15561,8 @@ function visitReactTag(traverse, object, path, state) {
     var lastRenderableIndex;
 
     childrenToRender.forEach(function(child, index) {
-      if (child.type !== Syntax.JSXExpressionContainer ||
-          child.expression.type !== Syntax.JSXEmptyExpression) {
+      if (child.type !== Syntax.XJSExpressionContainer ||
+          child.expression.type !== Syntax.XJSEmptyExpression) {
         lastRenderableIndex = index;
       }
     });
@@ -15633,9 +15577,9 @@ function visitReactTag(traverse, object, path, state) {
       var isLast = index >= lastRenderableIndex;
 
       if (child.type === Syntax.Literal) {
-        renderJSXLiteral(child, isLast, state);
-      } else if (child.type === Syntax.JSXExpressionContainer) {
-        renderJSXExpressionContainer(traverse, child, isLast, path, state);
+        renderXJSLiteral(child, isLast, state);
+      } else if (child.type === Syntax.XJSExpressionContainer) {
+        renderXJSExpressionContainer(traverse, child, isLast, path, state);
       } else {
         traverse(child, path, state);
         if (!isLast) {
@@ -15662,14 +15606,14 @@ function visitReactTag(traverse, object, path, state) {
 }
 
 visitReactTag.test = function(object, path, state) {
-  return object.type === Syntax.JSXElement;
+  return object.type === Syntax.XJSElement;
 };
 
 exports.visitorList = [
   visitReactTag
 ];
 
-},{"./jsx":37,"jstransform":22,"jstransform/src/utils":23}],39:[function(_dereq_,module,exports){
+},{"./xjs":39,"jstransform":22,"jstransform/src/utils":23}],38:[function(_dereq_,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15763,6 +15707,119 @@ visitReactDisplayName.test = function(object, path, state) {
 exports.visitorList = [
   visitReactDisplayName
 ];
+
+},{"jstransform":22,"jstransform/src/utils":23}],39:[function(_dereq_,module,exports){
+/**
+ * Copyright 2013-2015, Facebook, Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ */
+/*global exports:true*/
+'use strict';
+var Syntax = _dereq_('jstransform').Syntax;
+var utils = _dereq_('jstransform/src/utils');
+
+function renderXJSLiteral(object, isLast, state, start, end) {
+  var lines = object.value.split(/\r\n|\n|\r/);
+
+  if (start) {
+    utils.append(start, state);
+  }
+
+  var lastNonEmptyLine = 0;
+
+  lines.forEach(function(line, index) {
+    if (line.match(/[^ \t]/)) {
+      lastNonEmptyLine = index;
+    }
+  });
+
+  lines.forEach(function(line, index) {
+    var isFirstLine = index === 0;
+    var isLastLine = index === lines.length - 1;
+    var isLastNonEmptyLine = index === lastNonEmptyLine;
+
+    // replace rendered whitespace tabs with spaces
+    var trimmedLine = line.replace(/\t/g, ' ');
+
+    // trim whitespace touching a newline
+    if (!isFirstLine) {
+      trimmedLine = trimmedLine.replace(/^[ ]+/, '');
+    }
+    if (!isLastLine) {
+      trimmedLine = trimmedLine.replace(/[ ]+$/, '');
+    }
+
+    if (!isFirstLine) {
+      utils.append(line.match(/^[ \t]*/)[0], state);
+    }
+
+    if (trimmedLine || isLastNonEmptyLine) {
+      utils.append(
+        JSON.stringify(trimmedLine) +
+        (!isLastNonEmptyLine ? ' + \' \' +' : ''),
+        state);
+
+      if (isLastNonEmptyLine) {
+        if (end) {
+          utils.append(end, state);
+        }
+        if (!isLast) {
+          utils.append(', ', state);
+        }
+      }
+
+      // only restore tail whitespace if line had literals
+      if (trimmedLine && !isLastLine) {
+        utils.append(line.match(/[ \t]*$/)[0], state);
+      }
+    }
+
+    if (!isLastLine) {
+      utils.append('\n', state);
+    }
+  });
+
+  utils.move(object.range[1], state);
+}
+
+function renderXJSExpressionContainer(traverse, object, isLast, path, state) {
+  // Plus 1 to skip `{`.
+  utils.move(object.range[0] + 1, state);
+  utils.catchup(object.expression.range[0], state);
+  traverse(object.expression, path, state);
+
+  if (!isLast && object.expression.type !== Syntax.XJSEmptyExpression) {
+    // If we need to append a comma, make sure to do so after the expression.
+    utils.catchup(object.expression.range[1], state, trimLeft);
+    utils.append(', ', state);
+  }
+
+  // Minus 1 to skip `}`.
+  utils.catchup(object.range[1] - 1, state, trimLeft);
+  utils.move(object.range[1], state);
+  return false;
+}
+
+function quoteAttrName(attr) {
+  // Quote invalid JS identifiers.
+  if (!/^[a-z_$][a-z\d_$]*$/i.test(attr)) {
+    return '"' + attr + '"';
+  }
+  return attr;
+}
+
+function trimLeft(value) {
+  return value.replace(/^[ ]+/, '');
+}
+
+exports.renderXJSExpressionContainer = renderXJSExpressionContainer;
+exports.renderXJSLiteral = renderXJSLiteral;
+exports.quoteAttrName = quoteAttrName;
+exports.trimLeft = trimLeft;
 
 },{"jstransform":22,"jstransform/src/utils":23}],40:[function(_dereq_,module,exports){
 /*global exports:true*/
@@ -15891,7 +15948,7 @@ exports.getVisitorsBySet = getVisitorsBySet;
 exports.getAllVisitors = getAllVisitors;
 exports.transformVisitors = transformVisitors;
 
-},{"./transforms/react":38,"./transforms/reactDisplayName":39,"jstransform/visitors/es6-arrow-function-visitors":24,"jstransform/visitors/es6-call-spread-visitors":25,"jstransform/visitors/es6-class-visitors":26,"jstransform/visitors/es6-destructuring-visitors":27,"jstransform/visitors/es6-object-concise-method-visitors":28,"jstransform/visitors/es6-object-short-notation-visitors":29,"jstransform/visitors/es6-rest-param-visitors":30,"jstransform/visitors/es6-template-visitors":31,"jstransform/visitors/es7-spread-property-visitors":33,"jstransform/visitors/reserved-words-visitors":35}],41:[function(_dereq_,module,exports){
+},{"./transforms/react":37,"./transforms/reactDisplayName":38,"jstransform/visitors/es6-arrow-function-visitors":24,"jstransform/visitors/es6-call-spread-visitors":25,"jstransform/visitors/es6-class-visitors":26,"jstransform/visitors/es6-destructuring-visitors":27,"jstransform/visitors/es6-object-concise-method-visitors":28,"jstransform/visitors/es6-object-short-notation-visitors":29,"jstransform/visitors/es6-rest-param-visitors":30,"jstransform/visitors/es6-template-visitors":31,"jstransform/visitors/es7-spread-property-visitors":33,"jstransform/visitors/reserved-words-visitors":35}],41:[function(_dereq_,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
