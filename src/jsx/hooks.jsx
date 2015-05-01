@@ -30,6 +30,33 @@ class Hook {
   }
 }
 
-export default {
+const hooks = {
   get: name => _events[name] || (_events[name] = new Hook),
-};
+
+  init(plugin) {
+    let pluginHooks = _toHook.get(plugin.constructor);
+    if (pluginHooks) {
+      pluginHooks.forEach((hook) => {
+        let [hookName, methodName] = hook;
+        hooks.get(hookName).on((...args) => plugin[methodName](...args));
+      });
+    }
+  }
+}
+
+export default hooks;
+
+const _toHook = new Map();
+
+export function hook(name) {
+  return function(target, key, descriptor) {
+    let targetClass = target.constructor;
+
+    if (!_toHook.has(targetClass)) {
+      _toHook.set(targetClass, []);
+    }
+
+    let targetHooks = _toHook.get(targetClass);
+    targetHooks.push([name, key]);
+  }
+}

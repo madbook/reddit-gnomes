@@ -5,6 +5,7 @@ import { getPluginsList } from './plugins';
 import store from './store';
 import { toCssClassName } from './utils';
 import { router } from './route';
+import hooks from './hooks';
 
 var plugins = getPluginsList();
 
@@ -14,6 +15,7 @@ plugins.forEach(plugin => {
   plugin.setup();
   store.set(plugin.name, plugin.state);
   router(plugin);
+  hooks.init(plugin);
 });
 var activePlugins = plugins.filter(plugin => plugin.shouldRun());
 var pluginClassNames = activePlugins.map(plugin => {

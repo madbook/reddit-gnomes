@@ -1,7 +1,7 @@
 'use strict';
 
 import Plugin from '../../jsx/plugin';
-import hooks from '../../jsx/hooks';
+import { hook } from '../../jsx/hooks';
 import { route } from '../../jsx/route';
 
 
@@ -21,15 +21,13 @@ export default class TestPlugin extends Plugin {
     };
   }
 
-  // will only get called on the prefs page
-  @route({ page: 'prefs' })
-  setupExtraPrefs() {
-    hooks.get('init-prefs').on(descriptor => {
-      descriptor[this.name].push({
-        property: 'testing',
-        displayName: 'Testing',
-        description: 'nothing to see here',
-      });
+  // will only get called when the 'init-prefs' hook fires
+  @hook('init-prefs')
+  setupExtraPrefs(descriptor) {
+    descriptor[this.name].push({
+      property: 'testing',
+      displayName: 'Testing',
+      description: 'nothing to see here',
     });
   }
 
@@ -38,5 +36,11 @@ export default class TestPlugin extends Plugin {
   testForGnomeClass() {
     let gnomeClassFound = $('html').hasClass('gnome-test');
     console.log(template(gnomeClassFound));
+  }
+
+  // will get called on the prefs page
+  @route({ page: 'prefs' })
+  testRouting() {
+    console.log('this should only happen on the prefs page!')
   }
 }
