@@ -10,26 +10,46 @@ export function router(plugin) {
   }
 }
 
-export function route(routeDefinition) {
-  if (!routeDefinition) {
-    return;
-  }
-
+function getContextValidator(routeContext) {
   return function(target, key, descriptor) {
-    for (let key in routeDefinition) {
-      let val = routeDefinition[key];
+    for (let key in routeContext) {
+      let val = routeContext[key];
       if (context[key] !== val) {
-        return;
+        return false;
       }
     }
 
-    let targetClass = target.constructor;
+    return true;
+  }
+}
 
-    if (!routes.has(targetClass)) {
-      routes.set(targetClass, []);
+function _route(target, key, descriptor) {
+  let targetClass = target.constructor;
+
+  if (!routes.has(targetClass)) {
+    routes.set(targetClass, []);
+  }
+
+  let targetRoutes = routes.get(targetClass);
+  targetRoutes.push(key);
+}
+
+function getValidatedRoute(routeContext, validator) {
+  return function(target, key, descriptor) {
+    if (!validator(target, key, descriptor)) {
+      return false;;
+    } else {
+      return _route(target, key, descriptor);
     }
+  }
+}
 
-    let targetRoutes = routes.get(targetClass);
-    targetRoutes.push(key);
+export function route(...args) {
+  if (args.length === 1) {
+    let routeContext = args[0];
+    let routeValidator = getContextValidator(routeContext);
+    return getValidatedRoute(routeContext, routeValidator);
+  } else {
+    return _route(...args);
   }
 }
