@@ -3508,6 +3508,8 @@ var _store2 = _interopRequireDefault(_store);
 
 var _toCssClassName = require('./utils');
 
+var _router = require('./route');
+
 'use strict';
 
 var plugins = _getPluginsList.getPluginsList();
@@ -3517,6 +3519,7 @@ _store2['default'].state = {};
 plugins.forEach(function (plugin) {
   plugin.setup();
   _store2['default'].set(plugin.name, plugin.state);
+  _router.router(plugin);
 });
 var activePlugins = plugins.filter(function (plugin) {
   return plugin.shouldRun();
@@ -3537,7 +3540,7 @@ $(function () {
   });
 });
 
-},{"./plugins":91,"./polyfill":92,"./store":94,"./utils":95}],89:[function(require,module,exports){
+},{"./plugins":91,"./polyfill":92,"./route":93,"./store":95,"./utils":96}],89:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3608,7 +3611,7 @@ plugins.push(_topcomment2['default']);
 exports['default'] = plugins;
 module.exports = exports['default'];
 
-},{"../plugins/beta-toggle/plugin":96,"../plugins/juicy-votes/plugin":98,"../plugins/live-comments/plugin":100,"../plugins/prefs/plugin":101,"../plugins/readnext/plugin":103,"../plugins/sticky-comments/plugin":105,"../plugins/subreddit-search/plugin":106,"../plugins/test/plugin":108,"../plugins/top-comment/plugin":109}],90:[function(require,module,exports){
+},{"../plugins/beta-toggle/plugin":97,"../plugins/juicy-votes/plugin":99,"../plugins/live-comments/plugin":101,"../plugins/prefs/plugin":102,"../plugins/readnext/plugin":104,"../plugins/sticky-comments/plugin":106,"../plugins/subreddit-search/plugin":107,"../plugins/test/plugin":109,"../plugins/top-comment/plugin":110}],90:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3670,7 +3673,13 @@ var Plugin = (function (_StoreModel) {
   }, {
     key: 'meta',
     get: function () {
-      return this.constructor.meta || {};
+      if (this.constructor.meta) {
+        return this.constructor.meta;
+      }
+      var displayName = this.displayName;
+      var description = this.description;
+
+      return { displayName: displayName, description: description };
     }
   }, {
     key: 'shouldRun',
@@ -3705,7 +3714,7 @@ var Plugin = (function (_StoreModel) {
 exports['default'] = Plugin;
 module.exports = exports['default'];
 
-},{"./store":94,"./store-model":93}],91:[function(require,module,exports){
+},{"./store":95,"./store-model":94}],91:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3766,6 +3775,57 @@ exports['default'] = {};
 module.exports = exports['default'];
 
 },{"babel/polyfill":84}],93:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _interopRequireDefault = function (obj) { return obj && obj.__esModule ? obj : { 'default': obj }; };
+
+exports.router = router;
+exports.route = route;
+
+var _context = require('./context');
+
+var _context2 = _interopRequireDefault(_context);
+
+var routes = new Map();
+
+function router(plugin) {
+  var targetRoutes = routes.get(plugin.constructor);
+  if (targetRoutes) {
+    targetRoutes.forEach(function (route) {
+      return plugin[route]();
+    });
+  }
+}
+
+function route(routeDefinition) {
+  if (!routeDefinition) {
+    return;
+  }
+
+  return function (target, key, descriptor) {
+    for (var _key in routeDefinition) {
+      var val = routeDefinition[_key];
+      if (_context2['default'][_key] !== val) {
+        return;
+      }
+    }
+
+    var targetClass = target.constructor;
+
+    if (!routes.has(targetClass)) {
+      routes.set(targetClass, []);
+    }
+
+    var targetRoutes = routes.get(targetClass);
+    targetRoutes.push(key);
+  };
+}
+
+},{"./context":85}],94:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3855,7 +3915,7 @@ var StoreModel = (function () {
 exports['default'] = StoreModel;
 module.exports = exports['default'];
 
-},{}],94:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3873,7 +3933,7 @@ var _StoreModel2 = _interopRequireDefault(_StoreModel);
 exports['default'] = new _StoreModel2['default']('reddit-gnomes');
 module.exports = exports['default'];
 
-},{"./store-model":93}],95:[function(require,module,exports){
+},{"./store-model":94}],96:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3901,7 +3961,7 @@ function toCssClassName(name) {
   return name.replace(whitespaceRegex, '-').replace(camelCaseRegex, hyphenate).toLowerCase();
 }
 
-},{}],96:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3960,7 +4020,7 @@ BetaTogglePlugin.meta = {
   description: 'toggle on and off beta mode. meep.' };
 module.exports = exports['default'];
 
-},{"../../jsx/plugin":90,"./views":97}],97:[function(require,module,exports){
+},{"../../jsx/plugin":90,"./views":98}],98:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4020,7 +4080,7 @@ var BetaToggle = (function (_React$Component) {
 exports['default'] = BetaToggle;
 module.exports = exports['default'];
 
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4078,7 +4138,7 @@ JuicyVotesPlugin.meta = {
   cssClassName: 'juicy-votes' };
 module.exports = exports['default'];
 
-},{"../../jsx/plugin":90}],99:[function(require,module,exports){
+},{"../../jsx/plugin":90}],100:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4136,7 +4196,7 @@ exports["default"] = React.createClass({
 });
 module.exports = exports["default"];
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4252,7 +4312,7 @@ LiveCommentsPlugin.meta = {
   cssClassName: 'live-comments' };
 module.exports = exports['default'];
 
-},{"../../jsx/location":87,"../../jsx/plugin":90,"./comment":99}],101:[function(require,module,exports){
+},{"../../jsx/location":87,"../../jsx/plugin":90,"./comment":100}],102:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4346,7 +4406,7 @@ PrefsPlugin.meta = {
   description: 'creates UI on the user preference page to enable and \ndisable plugins' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/plugins":91,"./views":102}],102:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/plugins":91,"./views":103}],103:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4469,7 +4529,7 @@ exports.GnomePrefs = GnomePrefs;
 var preftableTemplate = '<table class="preftable pretty-form gnome-prefs-table">\n  <tr>\n    <th>gnome options</th>\n    <td class="prefright">\n    </td>\n  </tr>\n</table>';
 exports.preftableTemplate = preftableTemplate;
 
-},{"../../jsx/utils":95}],103:[function(require,module,exports){
+},{"../../jsx/utils":96}],104:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4599,7 +4659,7 @@ ReadNextPlugin.meta = {
   description: 'adds a widget to the sidebar on comments page that suggests\nnext posts' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"./views":104}],104:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"./views":105}],105:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4811,7 +4871,7 @@ var ReadNext = (function (_React$Component2) {
 
 exports['default'] = ReadNext;
 
-},{}],105:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4907,7 +4967,7 @@ StickyCommentsPlugin.meta = {
   description: 'seaches for a distinguished comment on a page and makes it sticky.' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/plugin":90}],106:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/plugin":90}],107:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5036,7 +5096,7 @@ SubredditSearch.meta = {
   description: 'mockup of subreddits in search results' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/plugin":90,"./templates":107}],107:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/plugin":90,"./templates":108}],108:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5237,7 +5297,7 @@ var renderSearchForm = function renderSearchForm(defaultVal) {
 };
 exports.renderSearchForm = renderSearchForm;
 
-},{"../../jsx/context":85}],108:[function(require,module,exports){
+},{"../../jsx/context":85}],109:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5248,7 +5308,7 @@ var _interopRequireDefault = function (obj) { return obj && obj.__esModule ? obj
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } };
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createDecoratedClass = (function () { function defineProperties(target, descriptors, initializers) { for (var i = 0; i < descriptors.length; i++) { var descriptor = descriptors[i]; var decorators = descriptor.decorators; var key = descriptor.key; delete descriptor.key; delete descriptor.decorators; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor || descriptor.initializer) descriptor.writable = true; if (decorators) { for (var f = 0; f < decorators.length; f++) { var decorator = decorators[f]; if (typeof decorator === 'function') { descriptor = decorator(target, key, descriptor) || descriptor; } else { throw new TypeError('The decorator for method ' + descriptor.key + ' is of the invalid type ' + typeof decorator); } } if (descriptor.initializer !== undefined) { initializers[key] = descriptor; continue; } } Object.defineProperty(target, key, descriptor); } } return function (Constructor, protoProps, staticProps, protoInitializers, staticInitializers) { if (protoProps) defineProperties(Constructor.prototype, protoProps, protoInitializers); if (staticProps) defineProperties(Constructor, staticProps, staticInitializers); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
@@ -5259,6 +5319,8 @@ var _Plugin3 = _interopRequireDefault(_Plugin2);
 var _hooks = require('../../jsx/hooks');
 
 var _hooks2 = _interopRequireDefault(_hooks);
+
+var _route = require('../../jsx/route');
 
 'use strict';
 
@@ -5273,13 +5335,17 @@ var TestPlugin = (function (_Plugin) {
     if (_Plugin != null) {
       _Plugin.apply(this, arguments);
     }
+
+    this.displayName = 'GnomeTest';
+    this.description = 'checks for the existence of the gnome css class';
   }
 
   _inherits(TestPlugin, _Plugin);
 
-  _createClass(TestPlugin, [{
-    key: 'setup',
-    value: function setup() {
+  _createDecoratedClass(TestPlugin, [{
+    key: 'setupExtraPrefs',
+    decorators: [_route.route({ page: 'prefs' })],
+    value: function setupExtraPrefs() {
       var _this = this;
 
       _hooks2['default'].get('init-prefs').on(function (descriptor) {
@@ -5289,9 +5355,13 @@ var TestPlugin = (function (_Plugin) {
           description: 'nothing to see here' });
       });
     }
+
+    // will get called on all pages
+
   }, {
-    key: 'run',
-    value: function run() {
+    key: 'testForGnomeClass',
+    decorators: [_route.route],
+    value: function testForGnomeClass() {
       var gnomeClassFound = $('html').hasClass('gnome-test');
       console.log(template(gnomeClassFound));
     }
@@ -5301,19 +5371,18 @@ var TestPlugin = (function (_Plugin) {
       return {
         testing: true };
     }
+
+    // will only get called on the prefs page
+
   }]);
 
   return TestPlugin;
 })(_Plugin3['default']);
 
 exports['default'] = TestPlugin;
-
-TestPlugin.meta = {
-  displayName: 'Gnome Test',
-  description: 'checks for the existence of the gnome css class' };
 module.exports = exports['default'];
 
-},{"../../jsx/hooks":86,"../../jsx/plugin":90}],109:[function(require,module,exports){
+},{"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/route":93}],110:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5450,4 +5519,4 @@ TopCommentPlugin.meta = {
   cssClassName: 'top-comment' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/location":87,"../../jsx/plugin":90,"../../jsx/utils":95}]},{},[88]);
+},{"../../jsx/context":85,"../../jsx/location":87,"../../jsx/plugin":90,"../../jsx/utils":96}]},{},[88]);
