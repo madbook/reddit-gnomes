@@ -40,7 +40,7 @@ module.exports = function(grunt) {
           extensions: ['.jsx', '.js', '.es6'],
         },
         transform: [["babelify", {
-          stage: 2,
+          stage: 0,
         }]]
       },
       dist: {

@@ -4,6 +4,7 @@ import polyfill from './polyfill';
 import { getPluginsList } from './plugins';
 import store from './store';
 import { toCssClassName } from './utils';
+import { router } from './route';
 
 var plugins = getPluginsList();
 
@@ -11,7 +12,8 @@ var plugins = getPluginsList();
 store.state = {};
 plugins.forEach(plugin => {
   plugin.setup();
-  store.set(plugin.name, plugin.state)
+  store.set(plugin.name, plugin.state);
+  router(plugin);
 });
 var activePlugins = plugins.filter(plugin => plugin.shouldRun());
 var pluginClassNames = activePlugins.map(plugin => {

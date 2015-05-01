@@ -15,7 +15,11 @@ export default class Plugin extends StoreModel {
   }
 
   get meta() {
-    return this.constructor.meta || {};
+    if (this.constructor.meta) {
+      return this.constructor.meta;
+    }
+    let { displayName, description } = this;
+    return { displayName, description };
   }
 
   constructor() {
