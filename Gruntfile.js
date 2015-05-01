@@ -39,7 +39,9 @@ module.exports = function(grunt) {
         browserifyOptions: {
           extensions: ['.jsx', '.js', '.es6'],
         },
-        transform: ['babelify']
+        transform: [["babelify", {
+          stage: 2,
+        }]]
       },
       dist: {
         files: {

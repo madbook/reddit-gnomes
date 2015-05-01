@@ -1,7 +1,6 @@
 'use strict';
 
-require('babel/polyfill');
-
+import polyfill from './polyfill';
 import { getPluginsList } from './plugins';
 import store from './store';
 import { toCssClassName } from './utils';

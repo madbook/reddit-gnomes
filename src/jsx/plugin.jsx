@@ -19,6 +19,7 @@ export default class Plugin extends StoreModel {
   }
 
   constructor() {
+    super();
     var { name } = this;
     var initialState = store.state[name];
 
