@@ -51,6 +51,23 @@ export default class Location {
       host = location.host;
     }
 
+    var hostParts = host.split('.');
+    var domain = hostParts[hostParts.length - 1];
+
+    var subdomain;
+    if (hostParts.length >= 3) {
+      subdomain = hostParts[0];
+    } else {
+      subdomain = 'www';
+    }
+
+    var hostName;
+    if (hostParts.length >= 3) {
+      hostName = hostParts.slice(1, hostParts.length - 2).join('.');
+    } else {
+      hostName = hostParts.slice(0, hostParts.length - 1).join('.');
+    }
+
     var parts = url.replace(/\//g, ' ').trim().split(' ');
     var subreddit = parts[0] === 'r' ? parts[1] : null;
     var pageID = subreddit ? 2 : 0;
@@ -65,6 +82,9 @@ export default class Location {
     this.thing = thing;
     this.protocol = protocol;
     this.host = host;
+    this.subdomain = subdomain;
+    this.hostName = hostName;
+    this.domain = domain;
     this.query = query;
   }
 }
