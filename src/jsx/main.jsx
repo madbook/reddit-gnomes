@@ -14,10 +14,12 @@ store.state = {};
 plugins.forEach(plugin => {
   plugin.setup();
   store.set(plugin.name, plugin.state);
-  router(plugin);
-  hooks.init(plugin);
 });
 var activePlugins = plugins.filter(plugin => plugin.shouldRun());
+activePlugins.forEach((plugin) => {
+  hooks.init(plugin);
+  router(plugin);
+});
 var pluginClassNames = activePlugins.map(plugin => {
   if (plugin.meta.cssClassName) {
     return 'gnome-' + plugin.meta.cssClassName;
