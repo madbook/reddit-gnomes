@@ -38,9 +38,13 @@ export default class TestPlugin extends Plugin {
     console.log(template(gnomeClassFound));
   }
 
-  // will get called on the prefs page
   @route({ page: 'prefs' })
   testRouting() {
-    console.log('this should only happen on the prefs page!')
+    console.log('this should only happen on the prefs page!');
+  }
+
+  @route({ subdomain: 'm' })
+  testMobile() {
+    console.log('this should only happen on the mobile website!');
   }
 }
