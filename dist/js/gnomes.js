@@ -5450,14 +5450,17 @@ var TestPlugin = (function (_Plugin) {
       var gnomeClassFound = $('html').hasClass('gnome-test');
       console.log(template(gnomeClassFound));
     }
-
-    // will get called on the prefs page
-
   }, {
     key: 'testRouting',
     decorators: [_route.route({ page: 'prefs' })],
     value: function testRouting() {
       console.log('this should only happen on the prefs page!');
+    }
+  }, {
+    key: 'testMobile',
+    decorators: [_route.route({ subdomain: 'm' })],
+    value: function testMobile() {
+      console.log('this should only happen on the mobile website!');
     }
   }], [{
     key: 'defaultState',
@@ -5569,37 +5572,50 @@ var ThemeSwitcher = (function (_React$Component) {
     this.onSubmit = this.onSubmit.bind(this);
 
     var themeStyleElement = document.createElement('style');
-    var savedTheme = localStorage.getItem('gnome-theme-switcher') || '';
-    themeStyleElement.innerHTML = _unsafe.unsafe(savedTheme);
-
+    var savedTheme = this.loadTheme();
     var transitionAll = document.createElement('style');
     transitionAll.innerHTML = '* { transition: all !important }';
-
-    this.state = {
-      themeContainer: themeStyleElement,
-      transitionAll: transitionAll,
-      appliedStylesheet: $('link[title="applied_subreddit_stylesheet"]')[0] };
+    this.transitionAll = transitionAll;
+    this.themeContainer = themeStyleElement;
+    this.appliedStylesheet = $('link[title="applied_subreddit_stylesheet"]')[0];
+    this._themeApplied = false;
+    this.applyTheme(savedTheme);
   }
 
   _inherits(ThemeSwitcher, _React$Component);
 
   _createClass(ThemeSwitcher, [{
-    key: 'componentWillMount',
-    value: function componentWillMount() {
-      document.head.appendChild(this.state.themeContainer);
-      document.head.appendChild(this.state.transitionAll);
-      if (this.state.appliedStylesheet) {
-        document.head.removeChild(this.state.appliedStylesheet);
+    key: 'applyTheme',
+    value: function applyTheme(stylesheetText) {
+      if (stylesheetText) {
+        this.themeContainer.innerHTML = _unsafe.unsafe(stylesheetText);
+      }
+
+      if (!this._themeApplied && stylesheetText) {
+        document.head.appendChild(this.themeContainer);
+        document.head.appendChild(this.transitionAll);
+        if (this.appliedStylesheet) {
+          document.head.removeChild(this.appliedStylesheet);
+        }
+        this._themeApplied = true;
+      } else if (this._themeApplied && !stylesheetText) {
+        document.head.removeChild(this.themeContainer);
+        document.head.removeChild(this.transitionAll);
+        if (this.appliedStylesheet) {
+          document.head.appendChild(this.appliedStylesheet);
+        }
+        this._themeApplied = false;
       }
     }
   }, {
-    key: 'componentWillUnmount',
-    value: function componentWillUnmount() {
-      document.head.removeChild(this.state.themeContainer);
-      document.head.removeChild(this.state.transitionAll);
-      if (this.state.appliedStylesheet) {
-        document.head.appendChild(this.state.appliedStylesheet);
-      }
+    key: 'saveTheme',
+    value: function saveTheme(stylesheetText) {
+      localStorage.setItem('gnome-theme-switcher', stylesheetText);
+    }
+  }, {
+    key: 'loadTheme',
+    value: function loadTheme() {
+      return localStorage.getItem('gnome-theme-switcher') || '';
     }
   }, {
     key: 'render',
@@ -5696,8 +5712,8 @@ var ThemeSwitcher = (function (_React$Component) {
 
           case 35:
 
-            localStorage.setItem('gnome-theme-switcher', stylesheetText);
-            this.state.themeContainer.innerHTML = _unsafe.unsafe(stylesheetText);
+            this.applyTheme(stylesheetText);
+            this.saveTheme(stylesheetText);
 
           case 37:
           case 'end':
