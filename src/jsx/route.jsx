@@ -14,8 +14,14 @@ function getContextValidator(routeContext) {
   return function(target, key, descriptor) {
     for (let key in routeContext) {
       let val = routeContext[key];
-      if (context[key] !== val) {
-        return false;
+      if (typeof val === 'boolean') {
+        if (val ^ !!context[key]) {
+          return false;
+        }
+      } else {
+        if (context[key] !== val) {
+          return false;
+        }
       }
     }
 
