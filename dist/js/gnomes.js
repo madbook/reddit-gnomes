@@ -3640,6 +3640,10 @@ var _stickycomments = require('../plugins/sticky-comments/plugin');
 
 var _stickycomments2 = _interopRequireDefault(_stickycomments);
 
+var _subredditaboutpage = require('../plugins/subreddit-about-page/plugin');
+
+var _subredditaboutpage2 = _interopRequireDefault(_subredditaboutpage);
+
 var _subredditsearch = require('../plugins/subreddit-search/plugin');
 
 var _subredditsearch2 = _interopRequireDefault(_subredditsearch);
@@ -3669,6 +3673,8 @@ plugins.push(_readnext2['default']);
 
 plugins.push(_stickycomments2['default']);
 
+plugins.push(_subredditaboutpage2['default']);
+
 plugins.push(_subredditsearch2['default']);
 
 plugins.push(_test2['default']);
@@ -3678,7 +3684,7 @@ plugins.push(_themeswitcher2['default']);
 exports['default'] = plugins;
 module.exports = exports['default'];
 
-},{"../plugins/beta-toggle/plugin":97,"../plugins/juicy-votes/plugin":99,"../plugins/live-comments/plugin":101,"../plugins/prefs/plugin":102,"../plugins/readnext/plugin":104,"../plugins/sticky-comments/plugin":106,"../plugins/subreddit-search/plugin":107,"../plugins/test/plugin":109,"../plugins/theme-switcher/plugin":110}],90:[function(require,module,exports){
+},{"../plugins/beta-toggle/plugin":97,"../plugins/juicy-votes/plugin":99,"../plugins/live-comments/plugin":101,"../plugins/prefs/plugin":102,"../plugins/readnext/plugin":104,"../plugins/sticky-comments/plugin":106,"../plugins/subreddit-about-page/plugin":107,"../plugins/subreddit-search/plugin":108,"../plugins/test/plugin":110,"../plugins/theme-switcher/plugin":111}],90:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3872,8 +3878,14 @@ function getContextValidator(routeContext) {
   return function (target, key, descriptor) {
     for (var _key2 in routeContext) {
       var val = routeContext[_key2];
-      if (_context2['default'][_key2] !== val) {
-        return false;
+      if (typeof val === 'boolean') {
+        if (val ^ !!_context2['default'][_key2]) {
+          return false;
+        }
+      } else {
+        if (_context2['default'][_key2] !== val) {
+          return false;
+        }
       }
     }
 
@@ -5069,6 +5081,98 @@ var _interopRequireDefault = function (obj) { return obj && obj.__esModule ? obj
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } };
 
+var _createDecoratedClass = (function () { function defineProperties(target, descriptors, initializers) { for (var i = 0; i < descriptors.length; i++) { var descriptor = descriptors[i]; var decorators = descriptor.decorators; var key = descriptor.key; delete descriptor.key; delete descriptor.decorators; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor || descriptor.initializer) descriptor.writable = true; if (decorators) { for (var f = 0; f < decorators.length; f++) { var decorator = decorators[f]; if (typeof decorator === 'function') { descriptor = decorator(target, key, descriptor) || descriptor; } else { throw new TypeError('The decorator for method ' + descriptor.key + ' is of the invalid type ' + typeof decorator); } } if (descriptor.initializer !== undefined) { initializers[key] = descriptor; continue; } } Object.defineProperty(target, key, descriptor); } } return function (Constructor, protoProps, staticProps, protoInitializers, staticInitializers) { if (protoProps) defineProperties(Constructor.prototype, protoProps, protoInitializers); if (staticProps) defineProperties(Constructor, staticProps, staticInitializers); return Constructor; }; })();
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _Plugin2 = require('../../jsx/plugin');
+
+var _Plugin3 = _interopRequireDefault(_Plugin2);
+
+var _route = require('../../jsx/route');
+
+var _unsafe = require('../../jsx/utils');
+
+var _context = require('../../jsx/context');
+
+var _context2 = _interopRequireDefault(_context);
+
+function aboutPageTemplate(descriptionHTML) {
+  return '<div class="gnome-about-page md-container">' + _unsafe.unsafe(descriptionHTML) + '</div>';
+}
+
+var SubredditAboutPagePlugin = (function (_Plugin) {
+  function SubredditAboutPagePlugin() {
+    _classCallCheck(this, SubredditAboutPagePlugin);
+
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
+    }
+
+    this.displayName = 'Fake About Page';
+    this.description = 'adds a fake about page using sidebar text at /r/subreddit/about';
+  }
+
+  _inherits(SubredditAboutPagePlugin, _Plugin);
+
+  _createDecoratedClass(SubredditAboutPagePlugin, [{
+    key: 'fakeAboutPage',
+    decorators: [_route.route({ subreddit: true, page: 'about', thing: false })],
+    value: function fakeAboutPage() {
+      var jsonResponse, data, descriptionHTML, markup, $container, $pageTitle;
+      return regeneratorRuntime.async(function fakeAboutPage$(context$2$0) {
+        while (1) switch (context$2$0.prev = context$2$0.next) {
+          case 0:
+            context$2$0.prev = 0;
+            context$2$0.next = 3;
+            return $.getJSON('/r/' + _context2['default'].subreddit + '/about/.json');
+
+          case 3:
+            jsonResponse = context$2$0.sent;
+            data = jsonResponse.data;
+            descriptionHTML = data.description_html;
+            markup = aboutPageTemplate(descriptionHTML);
+            $container = $('body > div.content');
+
+            $container.html(markup);
+
+            $pageTitle = $('.redditname');
+
+            $pageTitle.text('' + _context2['default'].subreddit + ': about');
+            context$2$0.next = 16;
+            break;
+
+          case 13:
+            context$2$0.prev = 13;
+            context$2$0.t0 = context$2$0['catch'](0);
+
+            console.warn('unable to get json for this subreddit');
+
+          case 16:
+          case 'end':
+            return context$2$0.stop();
+        }
+      }, null, this, [[0, 13]]);
+    }
+  }]);
+
+  return SubredditAboutPagePlugin;
+})(_Plugin3['default']);
+
+exports['default'] = SubredditAboutPagePlugin;
+module.exports = exports['default'];
+
+},{"../../jsx/context":85,"../../jsx/plugin":90,"../../jsx/route":93,"../../jsx/utils":96}],108:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _interopRequireDefault = function (obj) { return obj && obj.__esModule ? obj : { 'default': obj }; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } };
+
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _inherits = function (subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
@@ -5187,7 +5291,7 @@ SubredditSearch.meta = {
   description: 'mockup of subreddits in search results' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/plugin":90,"./templates":108}],108:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/plugin":90,"./templates":109}],109:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5388,7 +5492,7 @@ var renderSearchForm = function renderSearchForm(defaultVal) {
 };
 exports.renderSearchForm = renderSearchForm;
 
-},{"../../jsx/context":85}],109:[function(require,module,exports){
+},{"../../jsx/context":85}],110:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5479,7 +5583,7 @@ var TestPlugin = (function (_Plugin) {
 exports['default'] = TestPlugin;
 module.exports = exports['default'];
 
-},{"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/route":93}],110:[function(require,module,exports){
+},{"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/route":93}],111:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5544,7 +5648,7 @@ var ThemeSwitcherPlugin = (function (_Plugin) {
 exports['default'] = ThemeSwitcherPlugin;
 module.exports = exports['default'];
 
-},{"../../jsx/plugin":90,"../../jsx/route":93,"./views":111}],111:[function(require,module,exports){
+},{"../../jsx/plugin":90,"../../jsx/route":93,"./views":112}],112:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5672,9 +5776,9 @@ var ThemeSwitcher = (function (_React$Component) {
 
           case 18:
             context$2$0.prev = 18;
-            context$2$0.t0 = context$2$0['catch'](14);
+            context$2$0.t1 = context$2$0['catch'](14);
             _didIteratorError = true;
-            _iteratorError = context$2$0.t0;
+            _iteratorError = context$2$0.t1;
 
           case 22:
             context$2$0.prev = 22;
@@ -5706,7 +5810,7 @@ var ThemeSwitcher = (function (_React$Component) {
 
           case 32:
             context$2$0.prev = 32;
-            context$2$0.t1 = context$2$0['catch'](4);
+            context$2$0.t2 = context$2$0['catch'](4);
 
             console.warn('error retrieving stylesheet for /r/' + subredditName);
 
