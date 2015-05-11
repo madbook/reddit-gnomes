@@ -4,8 +4,7 @@ import polyfill from './polyfill';
 import { getPluginsList } from './plugins';
 import store from './store';
 import { toCssClassName } from './utils';
-import { router } from './route';
-import hooks from './hooks';
+import Registrar from './registrar';
 
 var plugins = getPluginsList();
 
@@ -17,8 +16,7 @@ plugins.forEach(plugin => {
 });
 var activePlugins = plugins.filter(plugin => plugin.shouldRun());
 activePlugins.forEach((plugin) => {
-  hooks.init(plugin);
-  router(plugin);
+  Registrar.initialize(plugin);
 });
 var pluginClassNames = activePlugins.map(plugin => {
   if (plugin.meta.cssClassName) {

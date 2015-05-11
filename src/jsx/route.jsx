@@ -1,14 +1,7 @@
 
 import context from './context';
+import Registrar from './registrar';
 
-let routes = new Map();
-
-export function router(plugin) {
-  let targetRoutes = routes.get(plugin.constructor);
-  if (targetRoutes) {
-    targetRoutes.forEach((route) => plugin[route]());
-  }
-}
 
 function getContextValidator(routeContext) {
   return function(target, key, descriptor) {
@@ -31,13 +24,11 @@ function getContextValidator(routeContext) {
 
 function _route(target, key, descriptor) {
   let targetClass = target.constructor;
+  Registrar.register(targetClass, key, _routeInitializer);
+}
 
-  if (!routes.has(targetClass)) {
-    routes.set(targetClass, []);
-  }
-
-  let targetRoutes = routes.get(targetClass);
-  targetRoutes.push(key);
+function _routeInitializer(instance, methodName) {
+  instance[methodName]();
 }
 
 function getValidatedRoute(routeContext, validator) {
