@@ -5,85 +5,83 @@
 .reddit-read-next {
   -webkit-user-select: none;
   z-index: 9001; // <- it's over 9000!
-  width: 300px;
+  max-width: 600px;
+  margin: 20px 320px 0 30px;
   height: 100px;
   background: white;
-  border-style: solid;
-  border-color: darken(white, 15%);
-  border-width: 1px;
-  position: relative;
-
-  &.fixed {
-    position: fixed;
-    top: 0;
-    border-top-width: 0;
-
-    &.fixed-to-bottom {
-      top: auto;
-      bottom: 0;
-      border-top-width: 1px;
-      border-bottom-width: 0;
-    }
-  }
-
-
   box-sizing: border-box;
   color: lighten(black, 10%);
 
+  .reddit-read-next-inner {
+    position: relative;
+  }
+
   header {
-    font-size: 12px;
+    font-size: 14px;
     line-height: 20px;
     color: #888888;
-    padding: 5px 10px 0;
-    background-color: #EFF7FF;
-    border-bottom: 1px solid darken(#EFF7FF, 5%);
   }
 
   &-title {
     display: block;
-    font-size: 12px;
-    line-height: 15px;
-    max-height: 45px;
+    font-size: 14px;
+    line-height: 20px;
+    max-height: 40px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   
   &-nav {
     position: absolute;
-    top: 5px;
-    right: 10px;
-    line-height: 15px;
+    top: 22px;
+    left: 0;
+    width: 100%;
+    line-height: 60px;
   }
   
   &-button {
-    font-size: 10px;
+    position: absolute;
+    top: 5px;
+    font-size: 12px;
     display: inline-block;
-    height: 15px;
-    width: 15px;
-    border-radius: 50%;
-    background-color: lighten(#369, 5%);
+    height: 60px;
+    width: 20px;    
+    color: lighten(#369, 5%);
+    // opacity: 0.5;
     text-align: center;
-    margin-left: 5px;
     cursor: pointer;
-    color: white;
-    position: relative;
     transition: all 0.2s;
+    font-weight: bold;
+    border-radius: 2px;
+
+    &.read-next-left {
+      left: 5px;
+    }
+
+    &.read-next-right {
+      right: 5px;
+    }
+
+    &:hover {
+      background-color: #F0F0F0;
+    }
 
     &:active {
-      background-color: #368;
+      background-color: darken(#F0F0F0, 5%);
       transform: scale(1.01, 1.01) translateY(1px);
     }
   }
 
   &-post-list {
-    padding: 5px 10px 10px;
+    padding: 5px 30px 10px;
+    border: 1px solid #F0F0F0;
+    border-radius: 2px;
   }
 
   &-post {
-    float: left;
     display: block;
     width: 100%;
-    height: 60px;
+    height: 55px;
     overflow: hidden;
 
     &.hidden {
@@ -95,12 +93,11 @@
       float: left;
       margin-right: 5px;
       margin-top: 3px;
-      width: 50px;
-      height: 50px;
+      height: 40px;
 
       img {
-        width: 100%;
-        height: auto;
+        height: 100%;
+        width: auto;
       }
     }
   }

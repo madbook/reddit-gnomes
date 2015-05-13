@@ -101,15 +101,17 @@ export default class ReadNext extends React.Component {
     });
 
     return <div className={classSet}>
-      <header>
-        also in <a href={fullSubreddit}>{fullSubreddit}</a>
-        <div className="reddit-read-next-nav">
-          <span className="reddit-read-next-button" onClick={this.prev}>{'<'}</span>
-          <span className="reddit-read-next-button" onClick={this.next}>{'>'}</span>
+      <div className="reddit-read-next-inner">
+        <header>
+          more discussions in <a href={fullSubreddit}>{fullSubreddit}</a>
+        </header>
+        <nav className="reddit-read-next-nav">
+          <span className="reddit-read-next-button read-next-left" onClick={this.prev}>{'<'}</span>
+          <span className="reddit-read-next-button read-next-right" onClick={this.next}>{'>'}</span>
+        </nav>
+        <div className="reddit-read-next-post-list">
+          {posts}
         </div>
-      </header>
-      <div className="reddit-read-next-post-list">
-        {posts}
       </div>
     </div>;
   }
