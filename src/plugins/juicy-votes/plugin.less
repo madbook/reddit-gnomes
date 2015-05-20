@@ -3,23 +3,38 @@
     overflow: visible !important;
   }
 
+  .arrow.up, .arrow.upmod {
+    background-image: data-uri('./juicy-upvote-spritesheet.png') !important;
+    background-size: 114px 19px;
+    overflow: hidden;
+    width: 19px;
+    height: 19px;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .arrow.up {
+    background-position: 0 0 !important;
+  }
+
+  .arrow.upmod {
+    background-position: -95px 0 !important;
+  }
+
+
+  
   @pulseScale: 1.2;
 
-  @-webkit-keyframes pulse {
+  @-webkit-keyframes juicy-upvote {
     0% {
-      -webkit-transform: scale3d(1, 1, 1);
-    }
-
-    50% {
-      -webkit-transform: scale3d(@pulseScale, @pulseScale, @pulseScale);
+      background-position: 0 0 !important;
     }
 
     100% {
-      -webkit-transform: scale3d(1, 1, 1);
+      background-position: -95px 0 !important;
     }
   }
-
   .reddit-prototype-juicy-ui-pulse {
-    -webkit-animation: pulse 0.3s;
+    -webkit-animation: juicy-upvote 0.2777777s steps(5);
   }
 }
