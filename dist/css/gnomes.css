@@ -21,19 +21,32 @@
 .gnome-juicy-votes .midcol {
   overflow: visible !important;
 }
-@-webkit-keyframes pulse {
+.gnome-juicy-votes .arrow.up,
+.gnome-juicy-votes .arrow.upmod {
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOQAAAAmCAYAAADUdzcyAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyhpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMDE0IDc5LjE1Njc5NywgMjAxNC8wOC8yMC0wOTo1MzowMiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTQgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6MzYxQ0ZERDVGNzUzMTFFNEI4NzNCM0Y0MEQyMTJFNzQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MzYxQ0ZERDZGNzUzMTFFNEI4NzNCM0Y0MEQyMTJFNzQiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDozNjFDRkREM0Y3NTMxMUU0Qjg3M0IzRjQwRDIxMkU3NCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDozNjFDRkRENEY3NTMxMUU0Qjg3M0IzRjQwRDIxMkU3NCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pv0jdyUAAAXGSURBVHja7F1riFVVFN7XMcupZgycvGNDIBlEOEEU01hM2WtUosgbleWPNEPLxoLKSoogiLFMDOklWeafULGuRA9FjAqihw1URBA9/kRW9C9/lIV1+77Osm6Xe89jn7P3uY/1wcd97b3Pvues7+611t5n30KlUjEKe5TL5aRVTgAXgyvALnALuB38JUkjpVJJT34bYrKeAm84R0R4A3hi1fvPgo+DO0WcH7k4eGXDzXGKTQI3gXeCf0UVLtyzVa9qxpikp8ApesCV4IRwRY0Yq0fN5eCH4Gfg7WBvDv2lasfkUaGCbBsMgc+DB8HNMjrGxVngU+CP4IvgXE99ngaOy/Nxea1QQbYsemVk+1TczuUy8tliKrgUfB/8HLwDPMlh/x8G++R5n7xW5B1DWiQpjuI+eXzMpnILJynmiit6Hdjt6BhzJLZ7FHwZfA58L8P2B8FVNe/x9VZxodsfo4Vc7N7sq4QL0hK3guvk+SFJVHQKPhAuCylzBfh6zPau4e+ix/7TEp+uYwt8/SR4EaipeE92n4XLeqPEPAUhL+ISvVb/Ygr4RILyG8DjPPaPWd+RBp+NyOcKT3afVpBXSuKhq+q9LnF1rtJr9g9Wg6cnKD8LXOOpb4xx10eUWZ8yFm5HOLP7NIK8GNwhI0C9UYGT3Zd0+IUrgg9ZxiWneOjfAzGOw88fVA36sXvbGJJp/d0RSYxuiYXmG0eT3S0Axhc9FvWOl5HJpet/BnhXzLIstw380vpoi1P9vhxrgqQWXUNmm3+3bmnHwTT9cG73NoKcIwmKOBPXLPMaeKkJUvdth4js8DITnuzJE5sa/MrXwzFSfn4O/ZwJ7gLPr7K/a8EfPPfDi90ndVlPA/eY/+ar4oBl3wRnq7fTNLgaHE1YZ1Tq+QRF+HGVGI++N1Hznmt4s/skgqTPsRccsPhCA/KFBlQLuYMZ3I2WdVlvqqd+csnh2zJC1qJfPlvpoR9e7T6uIKdLw2lGudnyi9GnmsgVa02QybXBLKnvEowXuch+c4RLPUXKbJE6LuDd7uMIskd858EMvuCg+Na9qotcQEHdm7KNNSkEHWc0ege8JUEdln3XZJ+VzsXuowRJ94RZpfMy/KJsi1mobtWHd2w06RcdpHF5w3CBxIbDljY1IW1kgdzsPkyQzKxxvsXFXCLb3G7iZ/kU6ZFlUsYmKRSG2yQmLKZooyhtrErZl1ztfnKIULkSweVqG7bNlQ03gX+qXpyD53t/g88uC6m3P0SU+zKIF58x2d1/STFxXS5vd+OdN4cT1s/d7hsJkmv0fKxH5TEOycnTBcxuMRbyWdi5v9xRf5h5fMUEk+1ZgwLnvCEX6n+foF7udl/PZV0nLoQv8FjjqpeOwojEfEMOjzEkx7gwZvmmsPt6gmRauxCDcRGnrbVqox01Ur8FzvBwrBnico/FKNsUdq+bXCl8gdlZ3i+4tOZ9um5cBvezuJcc2ZLO+30DHhA3+GQTLCboqYoreWvUuSa4f/FwM58kFaTCFxaCn4BvgD+ZYM8g8teaci9ZCPJAndiP0wv9wqI8sg+7VZAKhX8hUOjfClsGLSNIy71+ON+zWlwV3rXPvWiOJG1ENyVW+EI77zq3CPzCBFti0AXi/BQ3bFqgl12hgvSHs02wYqNcJxY50wSLhffIc4VCBekIDNpfMMHc07yIsgtktOSoOV3NQKGCzA5cCMy9Yb4ywQqNuN+J8TPXPX4N3m10Xa1CBZm679yKj/u8PGLsd0abJnEm401udlxQs1CoIJNhnrimnLM6NaM2GW/yH6i4df+wmoYiD7TaPCRFw93YFjk8xrCIkrfg3A9+1w4XOuKv49x7BfF3e1tiOnij7UKr/GFruVxmjLcwItbj6v7rEzS7zQTbKzTCb+DeUql0xCgUOkL+D3+Ar0aUSXrHONdO7lIzUGgM6QZJ91WZqSagUEG6Q9ItIPrVBBQqyOYRZFFNQNFM+FuAAQAxcP+Jzsn+JwAAAABJRU5ErkJggg==") !important;
+  background-size: 114px 19px;
+  overflow: hidden;
+  width: 19px;
+  height: 19px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.gnome-juicy-votes .arrow.up {
+  background-position: 0 0 !important;
+}
+.gnome-juicy-votes .arrow.upmod {
+  background-position: -95px 0 !important;
+}
+@-webkit-keyframes juicy-upvote {
   0% {
-    -webkit-transform: scale3d(1, 1, 1);
-  }
-  50% {
-    -webkit-transform: scale3d(1.2, 1.2, 1.2);
+    background-position: 0 0 !important;
   }
   100% {
-    -webkit-transform: scale3d(1, 1, 1);
+    background-position: -95px 0 !important;
   }
 }
 .gnome-juicy-votes .reddit-prototype-juicy-ui-pulse {
-  -webkit-animation: pulse 0.3s;
+  -webkit-animation: juicy-upvote 0.2777777s steps(5);
 }
 
 .gnome-live-comments .reddit-prototype-live-comment header {
