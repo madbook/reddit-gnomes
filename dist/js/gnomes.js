@@ -3606,10 +3606,6 @@ Object.defineProperty(exports, '__esModule', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _pluginsBetaTogglePlugin = require('../plugins/beta-toggle/plugin');
-
-var _pluginsBetaTogglePlugin2 = _interopRequireDefault(_pluginsBetaTogglePlugin);
-
 var _pluginsJuicyVotesPlugin = require('../plugins/juicy-votes/plugin');
 
 var _pluginsJuicyVotesPlugin2 = _interopRequireDefault(_pluginsJuicyVotesPlugin);
@@ -3622,10 +3618,6 @@ var _pluginsPrefsPlugin = require('../plugins/prefs/plugin');
 
 var _pluginsPrefsPlugin2 = _interopRequireDefault(_pluginsPrefsPlugin);
 
-var _pluginsReadnextPlugin = require('../plugins/readnext/plugin');
-
-var _pluginsReadnextPlugin2 = _interopRequireDefault(_pluginsReadnextPlugin);
-
 var _pluginsStickyCommentsPlugin = require('../plugins/sticky-comments/plugin');
 
 var _pluginsStickyCommentsPlugin2 = _interopRequireDefault(_pluginsStickyCommentsPlugin);
@@ -3633,10 +3625,6 @@ var _pluginsStickyCommentsPlugin2 = _interopRequireDefault(_pluginsStickyComment
 var _pluginsSubredditAboutPagePlugin = require('../plugins/subreddit-about-page/plugin');
 
 var _pluginsSubredditAboutPagePlugin2 = _interopRequireDefault(_pluginsSubredditAboutPagePlugin);
-
-var _pluginsSubredditSearchPlugin = require('../plugins/subreddit-search/plugin');
-
-var _pluginsSubredditSearchPlugin2 = _interopRequireDefault(_pluginsSubredditSearchPlugin);
 
 var _pluginsTestPlugin = require('../plugins/test/plugin');
 
@@ -3651,21 +3639,15 @@ var _pluginsThemeSwitcherPlugin2 = _interopRequireDefault(_pluginsThemeSwitcherP
 
 var plugins = [];
 
-plugins.push(_pluginsBetaTogglePlugin2['default']);
-
 plugins.push(_pluginsJuicyVotesPlugin2['default']);
 
 plugins.push(_pluginsLiveCommentsPlugin2['default']);
 
 plugins.push(_pluginsPrefsPlugin2['default']);
 
-plugins.push(_pluginsReadnextPlugin2['default']);
-
 plugins.push(_pluginsStickyCommentsPlugin2['default']);
 
 plugins.push(_pluginsSubredditAboutPagePlugin2['default']);
-
-plugins.push(_pluginsSubredditSearchPlugin2['default']);
 
 plugins.push(_pluginsTestPlugin2['default']);
 
@@ -3674,7 +3656,7 @@ plugins.push(_pluginsThemeSwitcherPlugin2['default']);
 exports['default'] = plugins;
 module.exports = exports['default'];
 
-},{"../plugins/beta-toggle/plugin":98,"../plugins/juicy-votes/plugin":100,"../plugins/live-comments/plugin":102,"../plugins/prefs/plugin":103,"../plugins/readnext/plugin":105,"../plugins/sticky-comments/plugin":107,"../plugins/subreddit-about-page/plugin":108,"../plugins/subreddit-search/plugin":109,"../plugins/test/plugin":111,"../plugins/theme-switcher/plugin":112}],90:[function(require,module,exports){
+},{"../plugins/juicy-votes/plugin":98,"../plugins/live-comments/plugin":100,"../plugins/prefs/plugin":101,"../plugins/sticky-comments/plugin":103,"../plugins/subreddit-about-page/plugin":104,"../plugins/test/plugin":105,"../plugins/theme-switcher/plugin":106}],90:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4105,125 +4087,6 @@ var _jsxPlugin = require('../../jsx/plugin');
 
 var _jsxPlugin2 = _interopRequireDefault(_jsxPlugin);
 
-var _views = require('./views');
-
-var _views2 = _interopRequireDefault(_views);
-
-'use strict';
-
-var BetaTogglePlugin = (function (_Plugin) {
-  function BetaTogglePlugin() {
-    _classCallCheck(this, BetaTogglePlugin);
-
-    if (_Plugin != null) {
-      _Plugin.apply(this, arguments);
-    }
-  }
-
-  _inherits(BetaTogglePlugin, _Plugin);
-
-  _createClass(BetaTogglePlugin, [{
-    key: 'run',
-    value: function run() {
-      var isBeta = document.location.hostname.startsWith('beta.');
-      var mountNode = $.parseHTML('<div class="reddit-beta-toggle-mount"></div>')[0];
-      var $mountNode = $(mountNode);
-
-      React.render(React.createElement(_views2['default'], { isBeta: isBeta }), mountNode);
-
-      $('#sr-header-area .drop-choices').after(mountNode);
-    }
-  }]);
-
-  return BetaTogglePlugin;
-})(_jsxPlugin2['default']);
-
-exports['default'] = BetaTogglePlugin;
-
-BetaTogglePlugin.meta = {
-  displayName: 'Beta Toggle Gnome',
-  description: 'toggle on and off beta mode. meep.' };
-module.exports = exports['default'];
-
-},{"../../jsx/plugin":90,"./views":99}],99:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
-
-'use strict';
-
-var BetaToggle = (function (_React$Component) {
-  function BetaToggle() {
-    _classCallCheck(this, BetaToggle);
-
-    if (_React$Component != null) {
-      _React$Component.apply(this, arguments);
-    }
-  }
-
-  _inherits(BetaToggle, _React$Component);
-
-  _createClass(BetaToggle, [{
-    key: 'onChange',
-    value: function onChange() {
-      var a = document.createElement('a');
-      a.href = document.location.href;
-      a.hostname = this.props.isBeta ? 'www.reddit.com' : 'beta.reddit.com';
-      document.location = a.href;
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      var classSet = React.addons.classSet({
-        'beta-toggle': true,
-        'active': this.props.isBeta });
-
-      return React.createElement(
-        'div',
-        { className: classSet },
-        React.createElement(
-          'label',
-          null,
-          'beta ',
-          React.createElement('input', { type: 'checkbox', checked: this.props.isBeta, onChange: this.onChange.bind(this) })
-        )
-      );
-    }
-  }]);
-
-  return BetaToggle;
-})(React.Component);
-
-exports['default'] = BetaToggle;
-module.exports = exports['default'];
-
-},{}],100:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
-
-var _jsxPlugin = require('../../jsx/plugin');
-
-var _jsxPlugin2 = _interopRequireDefault(_jsxPlugin);
-
 'use strict';
 
 var JuicyVotesPlugin = (function (_Plugin) {
@@ -4263,7 +4126,7 @@ JuicyVotesPlugin.meta = {
   cssClassName: 'juicy-votes' };
 module.exports = exports['default'];
 
-},{"../../jsx/plugin":90}],101:[function(require,module,exports){
+},{"../../jsx/plugin":90}],99:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4321,7 +4184,7 @@ exports["default"] = React.createClass({
 });
 module.exports = exports["default"];
 
-},{}],102:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4437,7 +4300,7 @@ LiveCommentsPlugin.meta = {
   cssClassName: 'live-comments' };
 module.exports = exports['default'];
 
-},{"../../jsx/location":87,"../../jsx/plugin":90,"./comment":101}],103:[function(require,module,exports){
+},{"../../jsx/location":87,"../../jsx/plugin":90,"./comment":99}],101:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4531,7 +4394,7 @@ PrefsPlugin.meta = {
   description: 'creates UI on the user preference page to enable and \ndisable plugins' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/plugins":91,"./views":104}],104:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/plugins":91,"./views":102}],102:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4654,342 +4517,7 @@ exports.GnomePrefs = GnomePrefs;
 var preftableTemplate = '<table class="preftable pretty-form gnome-prefs-table">\n  <tr>\n    <th>gnome options</th>\n    <td class="prefright">\n    </td>\n  </tr>\n</table>';
 exports.preftableTemplate = preftableTemplate;
 
-},{"../../jsx/utils":97}],105:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createDecoratedClass = (function () { function defineProperties(target, descriptors, initializers) { for (var i = 0; i < descriptors.length; i++) { var descriptor = descriptors[i]; var decorators = descriptor.decorators; var key = descriptor.key; delete descriptor.key; delete descriptor.decorators; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor || descriptor.initializer) descriptor.writable = true; if (decorators) { for (var f = 0; f < decorators.length; f++) { var decorator = decorators[f]; if (typeof decorator === 'function') { descriptor = decorator(target, key, descriptor) || descriptor; } else { throw new TypeError('The decorator for method ' + descriptor.key + ' is of the invalid type ' + typeof decorator); } } if (descriptor.initializer !== undefined) { initializers[key] = descriptor; continue; } } Object.defineProperty(target, key, descriptor); } } return function (Constructor, protoProps, staticProps, protoInitializers, staticInitializers) { if (protoProps) defineProperties(Constructor.prototype, protoProps, protoInitializers); if (staticProps) defineProperties(Constructor, staticProps, staticInitializers); return Constructor; }; })();
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
-
-var _jsxContext = require('../../jsx/context');
-
-var _jsxContext2 = _interopRequireDefault(_jsxContext);
-
-var _jsxPlugin = require('../../jsx/plugin');
-
-var _jsxPlugin2 = _interopRequireDefault(_jsxPlugin);
-
-var _jsxHooks = require('../../jsx/hooks');
-
-var _jsxRoute = require('../../jsx/route');
-
-var _views = require('./views');
-
-var _views2 = _interopRequireDefault(_views);
-
-'use strict';
-
-var ReadNextPlugin = (function (_Plugin) {
-  function ReadNextPlugin() {
-    _classCallCheck(this, ReadNextPlugin);
-
-    if (_Plugin != null) {
-      _Plugin.apply(this, arguments);
-    }
-
-    this.displayName = 'Read Next Gnome';
-    this.description = 'adds a widget to the sidebar on comments page that suggests next posts';
-  }
-
-  _inherits(ReadNextPlugin, _Plugin);
-
-  _createDecoratedClass(ReadNextPlugin, [{
-    key: 'initPrefs',
-    decorators: [_jsxHooks.hook('init-prefs')],
-    value: function initPrefs(descriptor) {
-      descriptor[this.name].push({
-        property: 'lockToBottom',
-        displayName: 'Lock to Bottom',
-        description: 'lock the widget in the bottom corner instead of the top' });
-    }
-  }, {
-    key: 'initWidget',
-    decorators: [_jsxRoute.route({ page: 'comments' })],
-    value: function initWidget() {
-      var subreddit, thing, fullname, params, requestPath, mountNode, $mountNode, jsonData, postListData, position;
-      return regeneratorRuntime.async(function initWidget$(context$2$0) {
-        while (1) switch (context$2$0.prev = context$2$0.next) {
-          case 0:
-            subreddit = _jsxContext2['default'].subreddit;
-            thing = _jsxContext2['default'].thing;
-            fullname = 't3_' + thing;
-            params = $.param({ count: '10', after: fullname });
-            requestPath = '/r/' + subreddit + '.json?' + params;
-            mountNode = $.parseHTML('<div class="reddit-read-next-mount"></div>')[0];
-            $mountNode = $(mountNode);
-            context$2$0.prev = 7;
-            context$2$0.next = 10;
-            return $.get(requestPath);
-
-          case 10:
-            jsonData = context$2$0.sent;
-            postListData = jsonData.data.children.map(function (child) {
-              return child.data;
-            });
-
-            $('body > .content > .commentarea').append(mountNode);
-            position = this.state.lockToBottom ? 'bottom' : 'top';
-
-            React.render(React.createElement(_views2['default'], { shouldComponentLock: function (node) {
-                return false;
-              },
-              lockedToBottom: this.state.lockToBottom,
-              posts: postListData,
-              subreddit: subreddit,
-              position: position }), mountNode);
-            context$2$0.next = 20;
-            break;
-
-          case 17:
-            context$2$0.prev = 17;
-            context$2$0.t0 = context$2$0['catch'](7);
-
-            console.warn(context$2$0.t0);
-
-          case 20:
-          case 'end':
-            return context$2$0.stop();
-        }
-      }, null, this, [[7, 17]]);
-    }
-  }], [{
-    key: 'defaultState',
-    value: {
-      lockToBottom: false },
-    enumerable: true
-  }]);
-
-  return ReadNextPlugin;
-})(_jsxPlugin2['default']);
-
-exports['default'] = ReadNextPlugin;
-module.exports = exports['default'];
-
-},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/route":94,"./views":106}],106:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { desc = parent = getter = undefined; _again = false; var object = _x,
-    property = _x2,
-    receiver = _x3; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
-
-'use strict';
-
-var regexThumbnail = /^http/;
-
-var Post = (function (_React$Component) {
-  function Post() {
-    _classCallCheck(this, Post);
-
-    if (_React$Component != null) {
-      _React$Component.apply(this, arguments);
-    }
-  }
-
-  _inherits(Post, _React$Component);
-
-  _createClass(Post, [{
-    key: 'render',
-    value: function render() {
-      var classSet = React.addons.classSet({
-        'reddit-read-next-post': true,
-        'hidden': !this.props.visible });
-      var thumb = null;
-      var _props = this.props;
-      var title = _props.title;
-      var score = _props.score;
-      var count = _props.num_comments;
-      var permalink = _props.permalink;
-      var thumbnail = _props.thumbnail;
-
-      if (regexThumbnail.test(thumbnail)) {
-        thumb = React.createElement(
-          'div',
-          { className: 'thumbnail' },
-          React.createElement('img', { src: thumbnail })
-        );
-      }
-
-      return React.createElement(
-        'a',
-        { href: permalink, className: classSet },
-        React.createElement(
-          'div',
-          { className: 'reddit-read-next-meta' },
-          React.createElement(
-            'span',
-            null,
-            score,
-            ' points'
-          ),
-          ' · ',
-          React.createElement(
-            'span',
-            null,
-            count,
-            ' comments'
-          )
-        ),
-        thumb,
-        React.createElement(
-          'div',
-          { className: 'reddit-read-next-title' },
-          title
-        )
-      );
-    }
-  }], [{
-    key: 'defaultProps',
-    get: function () {
-      return {
-        visible: false };
-    }
-  }]);
-
-  return Post;
-})(React.Component);
-
-exports.Post = Post;
-
-var ReadNext = (function (_React$Component2) {
-  function ReadNext(props) {
-    _classCallCheck(this, ReadNext);
-
-    _get(Object.getPrototypeOf(ReadNext.prototype), 'constructor', this).call(this, props);
-    this.state = {
-      index: 0,
-      fixed: false };
-
-    this.prev = this.prev.bind(this);
-    this.next = this.next.bind(this);
-  }
-
-  _inherits(ReadNext, _React$Component2);
-
-  _createClass(ReadNext, [{
-    key: 'componentDidMount',
-    value: function componentDidMount() {
-      var _this2 = this;
-
-      var shouldComponentLock = this.props.shouldComponentLock;
-
-      var node = React.findDOMNode(this);
-
-      window.addEventListener('scroll', function () {
-        _this2.setState({
-          fixed: shouldComponentLock(node) });
-      });
-    }
-  }, {
-    key: 'next',
-    value: function next() {
-      var l = this.props.posts.length;
-      var i = this.state.index;
-
-      this.setState({
-        index: (i + 1) % l });
-    }
-  }, {
-    key: 'prev',
-    value: function prev() {
-      var l = this.props.posts.length;
-      var i = this.state.index;
-
-      this.setState({
-        index: (i + l - 1) % l });
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      if (!this.props.posts || !this.props.posts.length) {
-        return null;
-      }
-
-      var index = this.state.index;
-      var _props2 = this.props;
-      var subreddit = _props2.subreddit;
-      var posts = _props2.posts;
-
-      var fullSubreddit = '/r/' + subreddit;
-      posts = posts.map(function (post, i) {
-        return React.createElement(Post, _extends({}, post, { visible: index === i, key: i }));
-      });
-      var classSet = React.addons.classSet({
-        'reddit-read-next': true,
-        'fixed': this.state.fixed,
-        'fixed-to-bottom': this.props.lockedToBottom });
-
-      return React.createElement(
-        'div',
-        { className: classSet },
-        React.createElement(
-          'div',
-          { className: 'reddit-read-next-inner' },
-          React.createElement(
-            'header',
-            null,
-            'more discussions in ',
-            React.createElement(
-              'a',
-              { href: fullSubreddit },
-              fullSubreddit
-            )
-          ),
-          React.createElement(
-            'nav',
-            { className: 'reddit-read-next-nav' },
-            React.createElement(
-              'span',
-              { className: 'reddit-read-next-button read-next-left', onClick: this.prev },
-              '<'
-            ),
-            React.createElement(
-              'span',
-              { className: 'reddit-read-next-button read-next-right', onClick: this.next },
-              '>'
-            )
-          ),
-          React.createElement(
-            'div',
-            { className: 'reddit-read-next-post-list' },
-            posts
-          )
-        )
-      );
-    }
-  }], [{
-    key: 'defaultProps',
-    get: function () {
-      return {
-        posts: [] };
-    }
-  }]);
-
-  return ReadNext;
-})(React.Component);
-
-exports['default'] = ReadNext;
-
-},{}],107:[function(require,module,exports){
+},{"../../jsx/utils":97}],103:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5085,7 +4613,7 @@ StickyCommentsPlugin.meta = {
   description: 'seaches for a distinguished comment on a page and makes it sticky.' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/plugin":90}],108:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/plugin":90}],104:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5159,7 +4687,7 @@ var SubredditAboutPagePlugin = (function (_Plugin) {
 
           case 13:
             context$2$0.prev = 13;
-            context$2$0.t1 = context$2$0['catch'](0);
+            context$2$0.t0 = context$2$0['catch'](0);
 
             console.warn('unable to get json for this subreddit');
 
@@ -5177,337 +4705,7 @@ var SubredditAboutPagePlugin = (function (_Plugin) {
 exports['default'] = SubredditAboutPagePlugin;
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/plugin":90,"../../jsx/route":94,"../../jsx/utils":97}],109:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
-
-var _jsxPlugin = require('../../jsx/plugin');
-
-var _jsxPlugin2 = _interopRequireDefault(_jsxPlugin);
-
-var _jsxContext = require('../../jsx/context');
-
-var _jsxContext2 = _interopRequireDefault(_jsxContext);
-
-var _templates = require('./templates');
-
-'use strict';
-
-var SubredditSearch = (function (_Plugin) {
-  function SubredditSearch() {
-    _classCallCheck(this, SubredditSearch);
-
-    if (_Plugin != null) {
-      _Plugin.apply(this, arguments);
-    }
-  }
-
-  _inherits(SubredditSearch, _Plugin);
-
-  _createClass(SubredditSearch, [{
-    key: 'shouldRun',
-    value: function shouldRun() {
-      return _jsxContext2['default'].page === 'subreddit-search';
-    }
-  }, {
-    key: 'run',
-    value: function run() {
-      var searchQuery = location.search.slice(3);
-      var $container = $('body > div.content');
-
-      $container.empty();
-      $('#header .pagename').text('search + subreddits');
-
-      if (searchQuery) {
-        var postSearchEndpoint;
-
-        var searches = [];
-
-        if (_jsxContext2['default'].subreddit) {
-          searches.push('/r/' + _jsxContext2['default'].subreddit + '/search.json' + location.search);
-        } else {
-          searches.push('/search.json' + location.search);
-          searches.push('/subreddits/search.json' + location.search + '&limit=5');
-        }
-
-        var searchResults = searches.map(function (query) {
-          return $.get(query).then(function (res) {
-            return res.data.children;
-          });
-        });
-
-        $.when.apply($, searchResults).then(function (posts, subreddits) {
-          var exactMatch = '';
-          var renderedSubreddits = '';
-          var renderedPosts = '';
-
-          if (posts && posts.length) {
-            renderedPosts = posts.map(function (x) {
-              return _templates.renderResult(x);
-            });
-            var moreLink = '/search' + location.search;
-
-            if (_jsxContext2['default'].subreddit) {
-              moreLink = '/r/' + _jsxContext2['default'].subreddit + '' + moreLink;
-            }
-
-            var lastPost = posts[posts.length - 1];
-            moreLink += '&after=' + lastPost.data.name;
-
-            renderedPosts = _templates.renderGroup('posts', renderedPosts, moreLink);
-          }
-
-          if (subreddits && subreddits.length) {
-            var testDisplayName = subreddits[0].data.display_name.toLowerCase();
-            var testQuery = _jsxContext2['default'].query.q.toLowerCase();
-
-            if (testDisplayName === testQuery) {
-              exactMatch = '<div class="gnome-sr-result-group">\n              <div class="gnome-sr-result-group-contents">\n                ' + _templates.renderResult(subreddits[0]) + '\n              </div>\n            </div>';
-              subreddits = subreddits.slice(1);
-            }
-          }
-
-          if (subreddits && subreddits.length) {
-            renderedSubreddits = subreddits.map(function (x) {
-              return _templates.renderResult(x);
-            });
-            var moreLink = '/subreddits/search' + location.search;
-            var lastSubreddit = subreddits[subreddits.length - 1];
-            moreLink += '&after=' + lastSubreddit.data.name;
-            renderedSubreddits = _templates.renderGroup('subreddits', renderedSubreddits, moreLink);
-          }
-
-          $container.html('<div class="gnome-sr-page">\n          ' + _templates.renderSearchForm(searchQuery) + '\n          ' + exactMatch + '\n          ' + renderedSubreddits + '\n          ' + renderedPosts + '\n        </div>');
-        });
-      } else {
-        $container.html('<div class="gnome-sr-page">\n          ' + _templates.renderSearchForm(searchQuery) + '\n        </div>');
-      }
-    }
-  }]);
-
-  return SubredditSearch;
-})(_jsxPlugin2['default']);
-
-exports['default'] = SubredditSearch;
-
-SubredditSearch.meta = {
-  displayName: 'Subreddit Search',
-  description: 'mockup of subreddits in search results' };
-module.exports = exports['default'];
-
-},{"../../jsx/context":85,"../../jsx/plugin":90,"./templates":110}],110:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _slicedToArray(arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } }
-
-var _jsxContext = require('../../jsx/context');
-
-var _jsxContext2 = _interopRequireDefault(_jsxContext);
-
-var floor = Math.floor;
-var now = Date.now;
-
-var times = new Map([['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]]);
-
-function getRelativeDate(createdDate) {
-  var label = arguments[1] === undefined ? 'ago' : arguments[1];
-  var fallback = arguments[2] === undefined ? 'just now' : arguments[2];
-
-  var currentDate = floor(now() / 1000);
-  var seconds = currentDate - createdDate;
-
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
-
-  try {
-    for (var _iterator = times[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var _step$value = _slicedToArray(_step.value, 2);
-
-      var _name = _step$value[0];
-      var value = _step$value[1];
-
-      var time = floor(seconds / value);
-      if (time) {
-        var s = time > 1 ? 's' : '';
-        return '' + _name + ' ' + value + '' + s + ' ' + label;
-      }
-    }
-  } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator['return']) {
-        _iterator['return']();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
-  }
-
-  return fallback;
-}
-
-var isSubreddit = function isSubreddit(result) {
-  return result.kind === 't5';
-};
-
-var isPost = function isPost(result) {
-  return result.kind === 't3';
-};
-
-var fakeThumbnails = new Set(['self', 'default', 'nsfw']);
-
-var hasThumbnail = function hasThumbnail(result) {
-  var thumbnail = result.data.thumbnail;
-
-  return thumbnail && !fakeThumbnails.has(thumbnail);
-};
-
-var classSet = function classSet(classDesc) {
-  return Object.keys(classDesc).filter(function (key) {
-    return classDesc[key];
-  }).join(' ');
-};
-
-var getTemplateClasses = function getTemplateClasses(result) {
-  return classSet({
-    'gnome-sr-search-result': true,
-    'gnome-sr-post-result': isPost(result),
-    'gnome-sr-subreddit-result': isSubreddit(result),
-    'gnome-sr-has-thumbnail': hasThumbnail(result) });
-};
-
-var renderPostThumbnail = function renderPostThumbnail(result) {
-  if (!hasThumbnail(result)) {
-    return '';
-  }
-
-  return '<div class="gnome-sr-thumbnail">\n    <img src="' + result.data.thumbnail + '">\n  </div>';
-};
-
-var queryPattern = new RegExp('(' + _jsxContext2['default'].query.q + ')', 'igm');
-
-var highlightQuery = function highlightQuery(text) {
-  return text.replace(queryPattern, '<strong>$1</strong>');
-};
-
-var renderPostSelftext = function renderPostSelftext(result) {
-  if (!result.data.selftext) {
-    return '';
-  }
-
-  return '<div class="gnome-sr-description">\n    ' + highlightQuery(result.data.selftext) + '\n  </div>';
-};
-
-var getIconClasses = function getIconClasses(type) {
-  return 'gnome-sr-icon gnome-sr-icon-' + type;
-};
-
-var renderIconLink = function renderIconLink(iconType, url, displayText) {
-  if (!url) {
-    return '';
-  }
-
-  if (!displayText) {
-    displayText = url;
-  }
-
-  var iconLinkClasses = getIconClasses(iconType);
-
-  return '<div class="gnome-sr-link-container">\n    <span class="' + iconLinkClasses + '"></span>\n    <a class="gnome-sr-link" href="' + url + '">' + displayText + '</a>\n  </div>';
-};
-
-var renderPostLink = function renderPostLink(result) {
-  return renderIconLink('external', result.data.url);
-};
-
-var renderPostResult = function renderPostResult(result) {
-  return '<!-- post result type -->\n  ' + renderPostThumbnail(result) + '\n  <div class="gnome-sr-title-container">\n    <a class="gnome-sr-title" href="' + result.data.permalink + '">\n       ' + highlightQuery(result.data.title) + '</a>\n    <a class="gnome-sr-subtitle" href="/r/' + result.data.subreddit + '">\n       /r/' + highlightQuery(result.data.subreddit) + '</a>\n  </div>\n  <div class="gnome-sr-meta">\n    ' + result.data.score + ' points,\n    ' + result.data.num_comments + ' comments,\n    submitted [some time] ago\n    by ' + result.data.author + '\n  </div>\n  ' + renderPostSelftext(result) + '\n  ' + renderPostLink(result);
-};
-
-var renderSubredditRelation = function renderSubredditRelation(result) {
-  var label = '';
-
-  if (result.data.user_is_moderator) {
-    label = 'moderator';
-  } else if (result.data.user_is_contributor) {
-    label = 'contributor';
-  } else if (result.data.user_is_subscriber) {
-    label = 'subscribed';
-  }
-
-  if (!label) {
-    return '';
-  }
-
-  return '<span class="gnome-sr-subreddit-relation">' + label + '</span>';
-};
-
-var renderSubredditDescription = function renderSubredditDescription(result) {
-  if (!result.data.public_description) {
-    return '';
-  }
-
-  return '<div class="gnome-sr-description">\n    ' + highlightQuery(result.data.public_description) + '\n  </div>';
-};
-
-var renderSubredditFilterLink = function renderSubredditFilterLink(result) {
-  return renderIconLink('filter', '' + result.data.url + 'subreddit-search' + location.search + '&restrict_sr=on', 'search in ' + result.data.url);
-};
-
-var renderSubredditResult = function renderSubredditResult(result) {
-  return '<!-- subreddit result type -->\n  <div class="gnome-sr-title-container">\n    <a class="gnome-sr-title" href="' + result.data.url + '">\n       ' + highlightQuery(result.data.title) + '</a>\n    <a class="gnome-sr-subtitle" href="' + result.data.url + '">\n       /r/' + highlightQuery(result.data.display_name) + '</a>\n  </div>\n  <div class="gnome-sr-meta">\n    ' + renderSubredditRelation(result) + '\n    ' + result.data.subscribers + ' subscribers,\n    a community for [some time].\n  </div>\n  ' + renderSubredditDescription(result) + '\n  ' + renderSubredditFilterLink(result);
-};
-
-var renderResult = function renderResult(result) {
-  var content = '';
-
-  if (isSubreddit(result)) {
-    content = renderSubredditResult(result);
-  } else if (isPost(result)) {
-    content = renderPostResult(result);
-  }
-
-  if (!content) {
-    return '';
-  }
-
-  return '<div class="' + getTemplateClasses(result) + '">' + content + '</div>';
-};
-
-exports.renderResult = renderResult;
-var renderGroup = function renderGroup(name, contents, moreLink) {
-  return '<div class="gnome-sr-result-group">\n  <div class="gnome-sr-result-group-header">\n    ' + name + '\n  </div>\n  <div class="gnome-sr-result-group-contents">\n    ' + contents.join('\n') + '\n  </div>\n  <div class="gnome-sr-more-results-container">\n    <a class="gnome-sr-more-results" href="' + moreLink + '">more ' + name + ' results »</a>\n  </div>\n</div>';
-};
-
-exports.renderGroup = renderGroup;
-var renderSearchForm = function renderSearchForm(defaultVal) {
-  return '<div class="gnome-sr-search-form">\n  <form action="/subreddit-search" method="GET">\n    <input name="q" value="' + defaultVal + '" placeholder="search">\n  </form>\n</div>';
-};
-exports.renderSearchForm = renderSearchForm;
-
-},{"../../jsx/context":85}],111:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/plugin":90,"../../jsx/route":94,"../../jsx/utils":97}],105:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5598,7 +4796,7 @@ var TestPlugin = (function (_Plugin) {
 exports['default'] = TestPlugin;
 module.exports = exports['default'];
 
-},{"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/route":94}],112:[function(require,module,exports){
+},{"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/route":94}],106:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5663,7 +4861,7 @@ var ThemeSwitcherPlugin = (function (_Plugin) {
 exports['default'] = ThemeSwitcherPlugin;
 module.exports = exports['default'];
 
-},{"../../jsx/plugin":90,"../../jsx/route":94,"./views":113}],113:[function(require,module,exports){
+},{"../../jsx/plugin":90,"../../jsx/route":94,"./views":107}],107:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -5791,9 +4989,9 @@ var ThemeSwitcher = (function (_React$Component) {
 
           case 18:
             context$2$0.prev = 18;
-            context$2$0.t2 = context$2$0['catch'](14);
+            context$2$0.t1 = context$2$0['catch'](14);
             _didIteratorError = true;
-            _iteratorError = context$2$0.t2;
+            _iteratorError = context$2$0.t1;
 
           case 22:
             context$2$0.prev = 22;
@@ -5825,7 +5023,7 @@ var ThemeSwitcher = (function (_React$Component) {
 
           case 32:
             context$2$0.prev = 32;
-            context$2$0.t3 = context$2$0['catch'](4);
+            context$2$0.t2 = context$2$0['catch'](4);
 
             console.warn('error retrieving stylesheet for /r/' + subredditName);
 
