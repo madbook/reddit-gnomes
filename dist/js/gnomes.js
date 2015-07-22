@@ -3610,6 +3610,10 @@ var _pluginsJuicyVotesPlugin = require('../plugins/juicy-votes/plugin');
 
 var _pluginsJuicyVotesPlugin2 = _interopRequireDefault(_pluginsJuicyVotesPlugin);
 
+var _pluginsLazy_linkflairPlugin = require('../plugins/lazy_linkflair/plugin');
+
+var _pluginsLazy_linkflairPlugin2 = _interopRequireDefault(_pluginsLazy_linkflairPlugin);
+
 var _pluginsLiveCommentsPlugin = require('../plugins/live-comments/plugin');
 
 var _pluginsLiveCommentsPlugin2 = _interopRequireDefault(_pluginsLiveCommentsPlugin);
@@ -3641,6 +3645,8 @@ var plugins = [];
 
 plugins.push(_pluginsJuicyVotesPlugin2['default']);
 
+plugins.push(_pluginsLazy_linkflairPlugin2['default']);
+
 plugins.push(_pluginsLiveCommentsPlugin2['default']);
 
 plugins.push(_pluginsPrefsPlugin2['default']);
@@ -3656,7 +3662,7 @@ plugins.push(_pluginsThemeSwitcherPlugin2['default']);
 exports['default'] = plugins;
 module.exports = exports['default'];
 
-},{"../plugins/juicy-votes/plugin":98,"../plugins/live-comments/plugin":100,"../plugins/prefs/plugin":101,"../plugins/sticky-comments/plugin":103,"../plugins/subreddit-about-page/plugin":104,"../plugins/test/plugin":105,"../plugins/theme-switcher/plugin":106}],90:[function(require,module,exports){
+},{"../plugins/juicy-votes/plugin":98,"../plugins/lazy_linkflair/plugin":99,"../plugins/live-comments/plugin":101,"../plugins/prefs/plugin":102,"../plugins/sticky-comments/plugin":104,"../plugins/subreddit-about-page/plugin":105,"../plugins/test/plugin":106,"../plugins/theme-switcher/plugin":107}],90:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4048,24 +4054,40 @@ Object.defineProperty(exports, '__esModule', {
 });
 exports.unsafe = unsafe;
 exports.toCssClassName = toCssClassName;
+exports.escapeHTML = escapeHTML;
+exports.unescapeHTML = unescapeHTML;
 'use strict';
 
-var unsafeDiv = document.createElement('div');
+var unsafeEl = document.createElement('div');
 
 function unsafe(text) {
-  unsafeDiv.innerHTML = text;
-  return unsafeDiv.innerText;
+  unsafeEl.innerHTML = text;
+  return unsafeEl.innerText;
 }
 
-var camelCaseRegex = /([a-z])([A-Z])/g;
 var whitespaceRegex = /\ +/g;
+var unsafeCharRegex = /[^A-Za-z0-8_\-]/g;
+var camelCaseRegex = /([a-z])([A-Z])/g;
+var leadingNumberRegex = /^([0-9])/;
 
 function hyphenate(match, $1, $2) {
   return $1 + '-' + $2;
 }
 
 function toCssClassName(name) {
-  return name.replace(whitespaceRegex, '-').replace(camelCaseRegex, hyphenate).toLowerCase();
+  return name.replace(whitespaceRegex, '-').replace(unsafeCharRegex, '').replace(camelCaseRegex, hyphenate).replace(leadingNumberRegex, '_$1').toLowerCase();
+}
+
+var escapeEl = document.createElement('textarea');
+
+function escapeHTML(html) {
+  escapeEl.textContent = html;
+  return escapeEl.innerHTML;
+}
+
+function unescapeHTML(html) {
+  escapeEl.innerHTML = html;
+  return escapeEl.textContent;
 }
 
 },{}],98:[function(require,module,exports){
@@ -4127,6 +4149,84 @@ JuicyVotesPlugin.meta = {
 module.exports = exports['default'];
 
 },{"../../jsx/plugin":90}],99:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createDecoratedClass = (function () { function defineProperties(target, descriptors, initializers) { for (var i = 0; i < descriptors.length; i++) { var descriptor = descriptors[i]; var decorators = descriptor.decorators; var key = descriptor.key; delete descriptor.key; delete descriptor.decorators; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor || descriptor.initializer) descriptor.writable = true; if (decorators) { for (var f = 0; f < decorators.length; f++) { var decorator = decorators[f]; if (typeof decorator === 'function') { descriptor = decorator(target, key, descriptor) || descriptor; } else { throw new TypeError('The decorator for method ' + descriptor.key + ' is of the invalid type ' + typeof decorator); } } if (descriptor.initializer !== undefined) { initializers[key] = descriptor; continue; } } Object.defineProperty(target, key, descriptor); } } return function (Constructor, protoProps, staticProps, protoInitializers, staticInitializers) { if (protoProps) defineProperties(Constructor.prototype, protoProps, protoInitializers); if (staticProps) defineProperties(Constructor, staticProps, staticInitializers); return Constructor; }; })();
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
+
+var _jsxPlugin = require('../../jsx/plugin');
+
+var _jsxPlugin2 = _interopRequireDefault(_jsxPlugin);
+
+var _jsxRoute = require('../../jsx/route');
+
+var _jsxUtils = require('../../jsx/utils');
+
+'use strict';
+
+var lazyLinkflairRegex = / *\[([^\]]+)\] */g;
+
+function replaceLazyLinkFlair(match, $1) {
+  var className = _jsxUtils.toCssClassName($1);
+
+  return ' <span class="lazy-linkflair lazy-linkflair-' + className + '">' + $1 + '</span> ';
+}
+
+function injectLazyLinkFlair(link) {
+  var $link = $(link);
+  var $title = $link.find('a.title');
+  var titleText = $title.text();
+  var escapedText = _jsxUtils.escapeHTML(titleText);
+  var replacedText = escapedText.replace(lazyLinkflairRegex, replaceLazyLinkFlair);
+
+  $title.html(replacedText);
+}
+
+var LazyLinkflairPlugin = (function (_Plugin) {
+  function LazyLinkflairPlugin() {
+    _classCallCheck(this, LazyLinkflairPlugin);
+
+    if (_Plugin != null) {
+      _Plugin.apply(this, arguments);
+    }
+
+    this.displayName = 'LazyLinkflair';
+    this.description = 'linkflair for the lazy';
+  }
+
+  _inherits(LazyLinkflairPlugin, _Plugin);
+
+  _createDecoratedClass(LazyLinkflairPlugin, [{
+    key: 'addLazyLinkFlair',
+    decorators: [_jsxRoute.route],
+    value: function addLazyLinkFlair() {
+      var $listing = $('.linklisting');
+      var $links = $listing.children('.link').toArray();
+
+      if (!$links.length) {
+        return;
+      }
+
+      $links.forEach(injectLazyLinkFlair);
+    }
+  }]);
+
+  return LazyLinkflairPlugin;
+})(_jsxPlugin2['default']);
+
+exports['default'] = LazyLinkflairPlugin;
+module.exports = exports['default'];
+
+},{"../../jsx/plugin":90,"../../jsx/route":94,"../../jsx/utils":97}],100:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4184,7 +4284,7 @@ exports["default"] = React.createClass({
 });
 module.exports = exports["default"];
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4300,7 +4400,7 @@ LiveCommentsPlugin.meta = {
   cssClassName: 'live-comments' };
 module.exports = exports['default'];
 
-},{"../../jsx/location":87,"../../jsx/plugin":90,"./comment":99}],101:[function(require,module,exports){
+},{"../../jsx/location":87,"../../jsx/plugin":90,"./comment":100}],102:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4394,7 +4494,7 @@ PrefsPlugin.meta = {
   description: 'creates UI on the user preference page to enable and \ndisable plugins' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/plugins":91,"./views":102}],102:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/plugins":91,"./views":103}],103:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4517,7 +4617,7 @@ exports.GnomePrefs = GnomePrefs;
 var preftableTemplate = '<table class="preftable pretty-form gnome-prefs-table">\n  <tr>\n    <th>gnome options</th>\n    <td class="prefright">\n    </td>\n  </tr>\n</table>';
 exports.preftableTemplate = preftableTemplate;
 
-},{"../../jsx/utils":97}],103:[function(require,module,exports){
+},{"../../jsx/utils":97}],104:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4613,7 +4713,7 @@ StickyCommentsPlugin.meta = {
   description: 'seaches for a distinguished comment on a page and makes it sticky.' };
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/plugin":90}],104:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/plugin":90}],105:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4705,7 +4805,7 @@ var SubredditAboutPagePlugin = (function (_Plugin) {
 exports['default'] = SubredditAboutPagePlugin;
 module.exports = exports['default'];
 
-},{"../../jsx/context":85,"../../jsx/plugin":90,"../../jsx/route":94,"../../jsx/utils":97}],105:[function(require,module,exports){
+},{"../../jsx/context":85,"../../jsx/plugin":90,"../../jsx/route":94,"../../jsx/utils":97}],106:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4796,7 +4896,7 @@ var TestPlugin = (function (_Plugin) {
 exports['default'] = TestPlugin;
 module.exports = exports['default'];
 
-},{"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/route":94}],106:[function(require,module,exports){
+},{"../../jsx/hooks":86,"../../jsx/plugin":90,"../../jsx/route":94}],107:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -4861,7 +4961,7 @@ var ThemeSwitcherPlugin = (function (_Plugin) {
 exports['default'] = ThemeSwitcherPlugin;
 module.exports = exports['default'];
 
-},{"../../jsx/plugin":90,"../../jsx/route":94,"./views":107}],107:[function(require,module,exports){
+},{"../../jsx/plugin":90,"../../jsx/route":94,"./views":108}],108:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {

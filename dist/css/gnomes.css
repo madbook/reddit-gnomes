@@ -30,6 +30,17 @@
   -webkit-animation: juicy-upvote 0.2777777s steps(5);
 }
 
+.gnome-lazy-linkflair .lazy-linkflair {
+  display: inline-block;
+  color: #999999;
+  border: 1px solid #999999;
+  border-radius: 2px;
+  padding: 0px 0.1em;
+  font-size: 0.86em;
+  font-weight: normal;
+  line-height: inherit;
+}
+
 .gnome-live-comments .reddit-prototype-live-comment header {
   font-size: 12px;
   color: #888;
